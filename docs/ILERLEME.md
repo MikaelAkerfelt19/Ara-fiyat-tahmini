@@ -94,11 +94,29 @@ bağımlılıklar olarak açık tutuldu; frontend kaynak dosyaları değiştiril
 **İnceleme:** Bağımsız inceleme onaylandı; ekip kapsamı ve açık dış bağımlılıkların
 doğru kaydedildiği doğrulandı. Kritik veya önemli bulgu yok.
 
+### Adım 5: PR ve Linux CI doğrulaması — 13 Ekim 2026
+
+- [PR #25](https://github.com/MikaelAkerfelt19/Ara-fiyat-tahmini/pull/25)
+  `feature/core-iskelet` dalından `main` dalına açıldı.
+- B1 için `Closes #2`, tamamlanmamış B0 işleri için `Refs #1` bağlantıları eklendi.
+- [CI çalışması](https://github.com/MikaelAkerfelt19/Ara-fiyat-tahmini/actions/runs/38446756907)
+  `12c034e` kod/doküman durumunu Ubuntu ve Python 3.12 üzerinde başarıyla doğruladı.
+- Bağımlılık kurulumu ve `ruff check .` başarılı; 14 dosyanın biçimi temiz,
+  Python 3.12.15 üzerinde 17 test 0.63 saniyede geçti.
+- PR insan ekip incelemesine açık; bağımsız teknik inceleme insan ekip onayı yerine geçmez.
+- Bu kayıt commit'i kodu değiştirmez; PR güncellendiğinde son commit'in CI sonucu da kontrol edilir.
+
+**Bulgular:** Linux CI'da kurulum, biçimlendirme veya test hatası bulunmadı.
+Branch koruması, plandaki sıraya uygun olarak PR birleştirilene kadar uygulanmadı.
+
+**İnceleme:** Bağımsız inceleme onaylandı; CI kanıtı, doğrulanan commit ve açık
+insan/erişim bağımlılıkları doğru kaydedildi. Kritik veya önemli bulgu yok.
+
 ### Kalan başlangıç işleri
 
 - [x] Proje etiketleri ve M1/M2/M3 kilometre taşları.
 - [x] B0–B11 ve A0–A10 görevlerini planın kabul ölçütleriyle issue olarak oluşturma.
-- [ ] Başlangıç dalını PR ile incelemeye sunma ve GitHub CI sonucunu doğrulama.
+- [x] Başlangıç dalını PR ile incelemeye sunma ve GitHub CI sonucunu doğrulama.
 - [ ] GitHub Projects panosu: Yapılacak → Yapılıyor → İncelemede → Bitti.
 - [x] Frontend sorumlusu `meng-IO` ve mevcut yazma yetkili davet doğrulandı.
 - [ ] `meng-IO` için mevcut yazma yetkisi davetinin kabul edilmesi.
