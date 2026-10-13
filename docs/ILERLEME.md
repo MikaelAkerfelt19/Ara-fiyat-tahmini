@@ -77,12 +77,30 @@ B10'un iki alt görevi bağımlılık sırası korunarak ayrı tutuldu.
 **İnceleme:** Düzeltme sonrası ikinci bağımsız inceleme onaylandı; önceki kabul
 ölçütü eksikliği giderildi. Açık kritik veya önemli bulgu yok.
 
+### Adım 4: Ekip rollerini ve erişim durumunu doğrulama — 13 Ekim 2026
+
+- Kullanıcının belirttiği `meng-IO` hesabı GitHub API ile doğrulandı.
+- `AGENTS.md` içine kalıcı ekip rolleri eklendi: Kaan backend, `meng-IO` frontend.
+  Codex'in uygulama geliştirme kapsamı backend olarak açıkça kaydedildi.
+- Depoda `meng-IO` için önceden oluşturulmuş yazma yetkili bir collaborator daveti var.
+  Davet henüz kabul edilmediğinden erişim kurulumu tamamlandı sayılmadı.
+- Yinelenen davet gönderilmedi; mevcut davet ve izinler değiştirilmedi.
+- Projects için CLI yetkisi eksik; kontrol edilen tarayıcıda da GitHub oturumu açık
+  olmadığı için pano oluşturulamadı. Bu eksik diğer başlangıç işlerini engellemez.
+
+**Bulgular:** Kullanıcı adı eksikliği giderildi. Davet kabulü ve Projects erişimi dış
+bağımlılıklar olarak açık tutuldu; frontend kaynak dosyaları değiştirilmedi.
+
+**İnceleme:** Bağımsız inceleme onaylandı; ekip kapsamı ve açık dış bağımlılıkların
+doğru kaydedildiği doğrulandı. Kritik veya önemli bulgu yok.
+
 ### Kalan başlangıç işleri
 
 - [x] Proje etiketleri ve M1/M2/M3 kilometre taşları.
 - [x] B0–B11 ve A0–A10 görevlerini planın kabul ölçütleriyle issue olarak oluşturma.
 - [ ] Başlangıç dalını PR ile incelemeye sunma ve GitHub CI sonucunu doğrulama.
 - [ ] GitHub Projects panosu: Yapılacak → Yapılıyor → İncelemede → Bitti.
+- [x] Frontend sorumlusu `meng-IO` ve mevcut yazma yetkili davet doğrulandı.
 - [ ] `meng-IO` için mevcut yazma yetkisi davetinin kabul edilmesi.
 - [ ] B0 kabul ölçütü: arkadaşın depoyu klonlayıp bağımlılıkları hatasız kurması.
 - [ ] Ekip incelemesi ve PR birleştirme: insan ekip üyesinin onayı bekleniyor.
