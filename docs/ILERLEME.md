@@ -55,13 +55,35 @@ Uygulama kaynak kodunda hata veya değişiklik yok.
 **İnceleme:** Bağımsız inceleme onaylandı; kritik veya önemli bulgu yok.
 Plan tarihleri, etiketler, GitHub bağlantıları ve düzeltilen tarih kontrolü incelendi.
 
+### Adım 3: Görevleri GitHub issue'larına aktarma — 13 Ekim 2026
+
+- Backend planındaki 13 görev ve arayüz planındaki 11 görev için toplam 24 issue açıldı.
+- B10a ve B10b ayrı görev olarak korundu; kabul ölçütleri, etiketler, backend
+  bağımlılıkları ve M1/M2/M3 eşleştirmeleri kaynak planlardan aktarıldı.
+- [Görev bağlantıları](GITHUB_GOREVLERI.md) kaydedildi.
+- Issue başlıkları önce mevcut kayıtlarla karşılaştırıldı; yinelenen kayıt oluşturulmadı.
+- Her oluşturma yanıtındaki etiketler ve milestone numaraları beklenen değerlerle eşleşti.
+- Görev kayıtlarının açılması, ilgili uygulama fazının tamamlandığı anlamına gelmez.
+- `meng-IO` frontend sorumlusudur. Arayüz issue'ları ekip planlaması içindir;
+  Codex'in uygulama çalışması backend kapsamında kalır.
+
+**Bulgu ve düzeltme:** İlk bağımsız inceleme, yalnızca checklist satırlarını aktaran
+yardımcı işlemin B0'ın klonlama/kurulum kabulünü, B1'in sahte servis ve boş sayfa
+komutlarını, B10b'nin servis testlerini ve M2 entegrasyon ölçütlerini atladığını buldu.
+Commit öncesinde mevcut #1, #2 ve #12 açıklamaları tamamlandı; GitHub'dan yeniden
+okunarak eksik ölçütlerin artık bulunduğu doğrulandı. Yinelenen issue açılmadı.
+B10'un iki alt görevi bağımlılık sırası korunarak ayrı tutuldu.
+
+**İnceleme:** Düzeltme sonrası ikinci bağımsız inceleme onaylandı; önceki kabul
+ölçütü eksikliği giderildi. Açık kritik veya önemli bulgu yok.
+
 ### Kalan başlangıç işleri
 
 - [x] Proje etiketleri ve M1/M2/M3 kilometre taşları.
-- [ ] B0–B11 ve A0–A10 görevlerini planın kabul ölçütleriyle issue olarak oluşturma.
+- [x] B0–B11 ve A0–A10 görevlerini planın kabul ölçütleriyle issue olarak oluşturma.
 - [ ] Başlangıç dalını PR ile incelemeye sunma ve GitHub CI sonucunu doğrulama.
 - [ ] GitHub Projects panosu: Yapılacak → Yapılıyor → İncelemede → Bitti.
-- [ ] Arkadaşı collaborator olarak ekleme: GitHub kullanıcı adı bekleniyor.
+- [ ] `meng-IO` için mevcut yazma yetkisi davetinin kabul edilmesi.
 - [ ] B0 kabul ölçütü: arkadaşın depoyu klonlayıp bağımlılıkları hatasız kurması.
 - [ ] Ekip incelemesi ve PR birleştirme: insan ekip üyesinin onayı bekleniyor.
 - [ ] PR birleştikten sonra `main` için PR ve CI zorunluluğunu açma.
