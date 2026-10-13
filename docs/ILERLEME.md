@@ -35,9 +35,29 @@ Test başarısı, insan ekip üyesinin PR onayından ayrı kaydedilir.
 **İnceleme:** Bağımsız inceleme onaylandı; kritik veya önemli bulgu yok.
 Önerilen ifade düzeltmeleri commit öncesinde uygulandı.
 
+### Adım 2: Etiketler ve kilometre taşları — 13 Ekim 2026
+
+- `ui`, `db`, `ml`, `core`, `docs` etiketleri oluşturuldu; mevcut `bug` etiketi korundu.
+- [M1 — İskelet](https://github.com/MikaelAkerfelt19/Ara-fiyat-tahmini/milestone/1):
+  18 Ekim 2026.
+- [M2 — Gerçek model](https://github.com/MikaelAkerfelt19/Ara-fiyat-tahmini/milestone/2):
+  1 Kasım 2026.
+- [M3 — Teslim](https://github.com/MikaelAkerfelt19/Ara-fiyat-tahmini/milestone/3):
+  6 Kasım 2026.
+- Mevcut etiketler silinmedi; tekrar çalıştırmada aynı kayıtlar yeniden oluşturulmadı.
+- GitHub API'den altı etiketin varlığı ve üç teslim tarihi yeniden okunup doğrulandı.
+
+**Bulgu ve çözüm:** GitHub kilometre taşı `due_on` alanını takvim günü olarak,
+`00:00:00Z` saatiyle saklıyor. İlk doğrulamanın saati birebir karşılaştırması yanlıştı.
+Kontrol takvim tarihini karşılaştıracak şekilde düzeltildi; üç tarih planla eşleşiyor.
+Uygulama kaynak kodunda hata veya değişiklik yok.
+
+**İnceleme:** Bağımsız inceleme onaylandı; kritik veya önemli bulgu yok.
+Plan tarihleri, etiketler, GitHub bağlantıları ve düzeltilen tarih kontrolü incelendi.
+
 ### Kalan başlangıç işleri
 
-- [ ] Proje etiketleri ve M1/M2/M3 kilometre taşları.
+- [x] Proje etiketleri ve M1/M2/M3 kilometre taşları.
 - [ ] B0–B11 ve A0–A10 görevlerini planın kabul ölçütleriyle issue olarak oluşturma.
 - [ ] Başlangıç dalını PR ile incelemeye sunma ve GitHub CI sonucunu doğrulama.
 - [ ] GitHub Projects panosu: Yapılacak → Yapılıyor → İncelemede → Bitti.
