@@ -4,7 +4,7 @@ Bu belge arayüz (Streamlit) ile backend'in (DB + model) **nerede ve nasıl bulu
 
 **Değişiklik kuralı:** Bu belgede veya `src/core/` altında bir değişiklik iki kişinin onayıyla yapılır. Önce bu belge güncellenir, sonra kod.
 
-> **Durum:** Taslak. `CarInput` alanları, veri setinin sütunları görüldükten sonra (Rehber Adım 1, `DATA.md`) kesinleşecek. Aşağıdaki alanlar şimdilik yer tutucu.
+> **Durum:** Veri alanları kesinleşti (16 Kasım 2026).
 
 ---
 
@@ -16,15 +16,20 @@ from dataclasses import asdict, dataclass
 
 @dataclass
 class CarInput:
-    """Arayüzün formdan topladığı araç bilgisi."""
+    """Arayüzün formdan topladığı araç bilgisi. `mileage` KİLOMETRE cinsindendir."""
 
     brand: str
     model: str
     year: int
-    mileage: int
+    mileage: int  # kilometre (km)
     fuel_type: str
     transmission: str
-    # TODO(Hafta 1): DATA.md kesinleşince veri setindeki sütunlara göre güncelle
+    # İsteğe bağlı alanlar; bilinmiyorsa None
+    condition: str | None = None
+    cylinders: int | None = None
+    drive: str | None = None
+    body_type: str | None = None
+    title_status: str | None = None
 
     def to_dict(self) -> dict:
         return asdict(self)
@@ -32,12 +37,14 @@ class CarInput:
 
 @dataclass
 class Prediction:
-    """Servisin döndürdüğü tahmin."""
+    """Servisin döndürdüğü tahmin. price, low ve high TL cinsindendir."""
 
-    price: float
-    low: float | None  # olası aralığın alt sınırı (yoksa None)
-    high: float | None  # olası aralığın üst sınırı (yoksa None)
+    price: float  # TL
+    low: float | None  # olası aralığın alt sınırı, TL (yoksa None)
+    high: float | None  # olası aralığın üst sınırı, TL (yoksa None)
     model_version: str
+    currency: str = "TRY"
+    usd_try: float | None = None  # tahminde kullanılan USD/TRY kuru
 ```
 
 **Kural:** `CarInput` alan adları, `cars` tablosundaki ve modelin beklediği sütun adlarıyla **birebir aynıdır**. Böylece `pd.DataFrame([car.to_dict()])` doğrudan modele verilebilir.
@@ -63,7 +70,14 @@ Arayüz bunları `from src.core.api import service` ile alır ve `service.predic
 | `predict(car: CarInput) -> Prediction` | Tahmin | "Fiyatı Tahmin Et" butonu | Geçersiz girdide `ValueError`, model yoksa `ModelNotReadyError` fırlatır |
 | `save_prediction(car: CarInput, pred: Prediction) -> None` | – | `predict`'ten hemen sonra | `predictions` tablosuna bir satır yazar |
 | `get_history(limit: int = 20) -> list[dict]` | Son tahminler | "Son tahminler" bölümü | En yeni en üstte. Her sözlükte `created_at`, girdi alanları ve `price` bulunur |
-| `get_model_info() -> dict` | Model bilgisi | "Model hakkında" bölümü | Anahtarlar: `model_name`, `version`, `trained_at`, `mae`, `rmse`, `r2`, `n_train`. Model yoksa değerler `None` olur |
+| `get_model_info() -> dict` | Model bilgisi | "Model hakkında" bölümü | Anahtarlar: `model_name`, `version`, `trained_at`, `mae`, `rmse`, `r2`, `n_train`, `metrics_currency`. Model yoksa değerler `None` olur. Model metrikleri (`mae`, `rmse`) USD cinsindendir; `metrics_currency` bunu belirtir |
+
+**Notlar:**
+- Fiyatlar TL cinsindendir: TCMB günlük USD satış kuru × Türkiye piyasa katsayısı.
+- Kilometre (`mileage`) km cinsindendir.
+- Kategori değerleri (yakıt, vites, durum, çekiş, kasa, tapu durumu) Türkçe etiketlerdir.
+- İsteğe bağlı alanlar (`condition`, `cylinders`, `drive`, `body_type`, `title_status`) `None` olabilir.
+- `get_model_info()` sonucundaki `metrics_currency` anahtarı model metriklerinin USD olduğunu belirtir.
 
 ## 4. Mock ve gerçek servis seçimi: `src/core/api.py`
 
@@ -105,6 +119,10 @@ def get_options() -> dict[str, list[str]]:
         "brand": sorted(_MODELS),
         "fuel_type": ["Benzin", "Dizel", "Elektrik", "Hibrit"],
         "transmission": ["Manuel", "Otomatik"],
+        "condition": ["Hasarlı", "Orta", "Sıfır", "Sıfır gibi", "Çok iyi", "İyi"],
+        "drive": ["4x4", "Arkadan itiş", "Önden çekiş"],
+        "body_type": ["Hatchback", "SUV", "Sedan", "Station wagon"],
+        "title_status": ["Onarılmış pert", "Pert kayıtlı", "Temiz"],
     }
 
 
@@ -113,15 +131,23 @@ def get_models_for_brand(brand: str) -> list[str]:
 
 
 def get_ranges() -> dict[str, tuple[float, float]]:
-    return {"year": (1995, 2025), "mileage": (0, 400_000)}
+    return {"year": (1990, 2026), "mileage": (0, 400_000), "cylinders": (3, 12)}
 
 
 def predict(car: CarInput) -> Prediction:
     if car.mileage < 0:
         raise ValueError("Kilometre negatif olamaz.")
     price = 30_000 - (2025 - car.year) * 1_200 - car.mileage * 0.04
-    price = max(price, 1_500.0)
-    return Prediction(price=price, low=price * 0.9, high=price * 1.1, model_version="mock")
+    price = max(price, 1_500.0) * 40  # USD -> TL
+    price = max(price, 60_000.0)
+    return Prediction(
+        price=price,
+        low=price * 0.9,
+        high=price * 1.1,
+        model_version="mock",
+        currency="TRY",
+        usd_try=40.0,
+    )
 
 
 def save_prediction(car: CarInput, pred: Prediction) -> None:
@@ -143,6 +169,7 @@ def get_model_info() -> dict:
         "rmse": None,
         "r2": None,
         "n_train": 0,
+        "metrics_currency": "USD",
     }
 ```
 
@@ -150,7 +177,7 @@ def get_model_info() -> dict:
 
 | Ne | Yol | Repoda mı? |
 |---|---|---|
-| Ham veri | `data/raw/train.csv`, `data/raw/test.csv` | Hayır |
+| Ham veri | `data/raw/train_data_v2.csv`, `data/raw/test_data_v2.csv` | Hayır |
 | Veritabanı | `data/cars.db` | Hayır |
 | Model | `models/model.joblib` | Hayır (Releases'e eklenir) |
 | Model bilgisi | `models/model_meta.json` | Hayır |
@@ -159,13 +186,15 @@ def get_model_info() -> dict:
 
 ```sql
 -- Temizlenmiş veri. pandas.to_sql ile oluşturulur; sütunlar DATA.md'deki "temiz ad"lardır.
--- cars (...)
+-- cars (id, year, mileage, cylinders, brand, model, fuel_type, transmission,
+--       condition, drive, body_type, title_status, price)
+-- price: USD. mileage: km.
 
 CREATE TABLE IF NOT EXISTS predictions (
     id              INTEGER PRIMARY KEY AUTOINCREMENT,
     created_at      TEXT    NOT NULL,   -- ISO 8601, örn. 2026-10-20T14:05:00
     input_json      TEXT    NOT NULL,   -- CarInput.to_dict() JSON olarak
-    predicted_price REAL    NOT NULL,
+    predicted_price REAL    NOT NULL,   -- TL
     model_version   TEXT    NOT NULL
 );
 
@@ -190,3 +219,4 @@ CREATE TABLE IF NOT EXISTS model_runs (
 | Tarih | Değişiklik | Onaylayan |
 |---|---|---|
 | 9 Ekim 2026 | İlk taslak | Kaan |
+| 16 Kasım 2026 | CarInput alanları veriye göre kesinleşti; fiyat TL, kilometre km | Kaan |

@@ -17,6 +17,10 @@ def get_options() -> dict[str, list[str]]:
         "brand": sorted(_MODELS),
         "fuel_type": ["Benzin", "Dizel", "Elektrik", "Hibrit"],
         "transmission": ["Manuel", "Otomatik"],
+        "condition": ["Hasarlı", "Orta", "Sıfır", "Sıfır gibi", "Çok iyi", "İyi"],
+        "drive": ["4x4", "Arkadan itiş", "Önden çekiş"],
+        "body_type": ["Hatchback", "SUV", "Sedan", "Station wagon"],
+        "title_status": ["Onarılmış pert", "Pert kayıtlı", "Temiz"],
     }
 
 
@@ -25,15 +29,23 @@ def get_models_for_brand(brand: str) -> list[str]:
 
 
 def get_ranges() -> dict[str, tuple[float, float]]:
-    return {"year": (1995, 2025), "mileage": (0, 400_000)}
+    return {"year": (1990, 2026), "mileage": (0, 400_000), "cylinders": (3, 12)}
 
 
 def predict(car: CarInput) -> Prediction:
     if car.mileage < 0:
         raise ValueError("Kilometre negatif olamaz.")
     price = 30_000 - (2025 - car.year) * 1_200 - car.mileage * 0.04
-    price = max(price, 1_500.0)
-    return Prediction(price=price, low=price * 0.9, high=price * 1.1, model_version="mock")
+    price = max(price, 1_500.0) * 40  # USD -> TL
+    price = max(price, 60_000.0)
+    return Prediction(
+        price=price,
+        low=price * 0.9,
+        high=price * 1.1,
+        model_version="mock",
+        currency="TRY",
+        usd_try=40.0,
+    )
 
 
 def save_prediction(car: CarInput, pred: Prediction) -> None:
@@ -55,4 +67,5 @@ def get_model_info() -> dict:
         "rmse": None,
         "r2": None,
         "n_train": 0,
+        "metrics_currency": "USD",
     }

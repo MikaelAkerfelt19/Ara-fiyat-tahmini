@@ -84,6 +84,7 @@ def test_model_info_has_contract_keys():
         "rmse",
         "r2",
         "n_train",
+        "metrics_currency",
     }
 
 
