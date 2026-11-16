@@ -27,6 +27,7 @@ from src.ml.config import (
 )
 
 LOCALIZATION_PATH = Path("models/localization.json")
+SELLER_TYPES = ("Galeri", "Bireysel")
 
 
 def segment_of(row: dict) -> str:
@@ -76,6 +77,7 @@ def _reference_frame() -> pd.DataFrame:
             "cylinders": None,
             "condition": None,
             "drive": None,
+            "seller_type": None,  # sahibinden.com ortalaması karışık piyasa: satıcı bilinmiyor
         }
         for brand, model, year, km, fuel, body, _ in REFERENCE_CARS
     ]
@@ -102,15 +104,15 @@ def _model_cliff(model) -> float:
     """
     low_km, high_km = KM_RAMP
     frame = _reference_frame()
-    at_low = model.predict(frame.assign(mileage=low_km))
-    at_high = model.predict(frame.assign(mileage=high_km))
-    return float(np.median(np.asarray(at_high, dtype=float) / np.asarray(at_low, dtype=float)))
+    at_low = predict_usd(model, frame.assign(mileage=low_km))
+    at_high = predict_usd(model, frame.assign(mileage=high_km))
+    return float(np.median(at_high / at_low))
 
 
 def calibrate(model, usd_try: float, source: str) -> dict:
     """Referans arabalardan segment, marka+model tabanlarını ve km çarpanını hesaplar."""
     frame = _reference_frame()
-    preds = [float(p) for p in model.predict(frame)]
+    preds = [float(p) for p in predict_usd(model, frame)]
     references = []
     for (brand, name, year, km, _fuel, _body, price_tl), usd, row in zip(
         REFERENCE_CARS, preds, frame.to_dict("records"), strict=True
@@ -206,6 +208,28 @@ def tl_price(
     """
     heavy = row.get("title_status") in HEAVY_DAMAGE_STATUSES
     base_row = {**row, "title_status": "Temiz"} if heavy else dict(row)
+    seller = base_row.get("seller_type")
+    if seller is None or pd.isna(seller):
+        # Kullanıcı satıcı tipini belirtmediyse piyasa ortalamasını veririz: fiyat her iki tip
+        # için AYRI hesaplanır, geometrik ortalaması alınır. Her biri km'de azalan olduğundan
+        # ortalaması da azalandır; yani km zarfı bozulmaz.
+        results = [
+            _envelope_price(model, features, {**base_row, "seller_type": s}, usd_try, loc)
+            for s in SELLER_TYPES
+        ]
+        price = _geometric_mean([p for p, _ in results])
+        usd_own = _geometric_mean([u for _, u in results])
+    else:
+        price, usd_own = _envelope_price(model, features, base_row, usd_try, loc)
+    if heavy:
+        price *= 1 - HEAVY_DAMAGE_DISCOUNT
+    return float(price), float(usd_own)
+
+
+def _envelope_price(
+    model, features: list[str], base_row: dict, usd_try: float, loc: dict
+) -> tuple[float, float]:
+    """Tek satıcı tipi için km zarfı fiyatı (ağır hasar indirimi hariç) ve kendi km'sindeki USD."""
     km = base_row.get("mileage")
     if km is None or pd.isna(km):
         grid = [km]  # km bilinmiyor: zarf kurulamaz, tek satır
@@ -215,17 +239,30 @@ def tl_price(
     frame = pd.DataFrame(rows)[features]
     usd = np.asarray(model.predict(frame), dtype=float)
     raw = [u * usd_try * factor_for(r, loc) for u, r in zip(usd, rows, strict=True)]
-    price = min(raw)
-    if heavy:
-        price *= 1 - HEAVY_DAMAGE_DISCOUNT
     # Bilgi amaçlı USD: aracın kendi km'sindeki tahmin
     usd_own = (
         float(usd[-1])
         if km is None or pd.isna(km)
         else _predict_one(model, features, {**base_row, "mileage": km})
     )
-    return float(price), usd_own
+    return min(raw), usd_own
 
 
 def _predict_one(model, features: list[str], row: dict) -> float:
     return float(model.predict(pd.DataFrame([row])[features])[0])
+
+
+def predict_usd(model, frame: pd.DataFrame) -> np.ndarray:
+    """USD tahmin; satıcı tipi boş satırlar için iki tipin geometrik ortalaması.
+
+    Referans araçların fiyatları sahibinden.com ortalamasıdır (galeri + bireysel karışık),
+    bu yüzden modelin tahmini de karışık piyasayı yansıtmalı: tl_price ile tutarlı olur.
+    """
+    if "seller_type" not in frame.columns or not frame["seller_type"].isna().any():
+        return np.asarray(model.predict(frame), dtype=float)
+    missing = frame["seller_type"].isna().to_numpy()
+    by_type = [
+        np.asarray(model.predict(frame.assign(seller_type=frame["seller_type"].where(~missing, s))))
+        for s in SELLER_TYPES
+    ]
+    return np.where(missing, np.sqrt(by_type[0] * by_type[1]), by_type[0])

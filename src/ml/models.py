@@ -1,19 +1,26 @@
 """Model kurucu fonksiyonlar. Hepsi ham (clean edilmiş) X alır, USD fiyat döndürür."""
 
 import numpy as np
+import pandas as pd
 from sklearn.compose import ColumnTransformer, TransformedTargetRegressor
 from sklearn.dummy import DummyRegressor
 from sklearn.ensemble import HistGradientBoostingRegressor, RandomForestRegressor
 from sklearn.impute import SimpleImputer
 from sklearn.linear_model import Ridge
 from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import FunctionTransformer, OneHotEncoder, StandardScaler
+from sklearn.preprocessing import (
+    FunctionTransformer,
+    OneHotEncoder,
+    OrdinalEncoder,
+    StandardScaler,
+)
 
 from src.ml.config import CAT_COLS, NUM_COLS, RANDOM_STATE
 
-# notebooks/03_modelleme.ipynb içindeki RandomizedSearchCV sonucuna göre elle yazıldı.
-# Tarih: 16 Kasım 2026. 5 katlı CV MAE: varsayılan 6028 -> ayarlı 5881 (USD).
-BEST_MODEL = "hist_gb"
+# Seçilen model: büyük veri için sıra kodlamalı HistGB (make_big_hist_gb). Aşağıdaki
+# BEST_PARAMS, küçük Kaggle verisiyle yapılan eski arama sonucudur (notebooks/03_modelleme.ipynb:
+# 5 katlı CV MAE varsayılan 6028 -> ayarlı 5881 USD); notebook karşılaştırması için kalır.
+BEST_MODEL = "big_hist_gb"
 BEST_PARAMS: dict = {
     "learning_rate": 0.03,
     "max_iter": 400,
@@ -96,8 +103,59 @@ def make_hist_gb(**params) -> TransformedTargetRegressor:
     return _wrap(reg, scale=False, pandas_out=True)
 
 
+def _to_float(df):
+    """Sayısal sütunları float'a çevirir (None/Int64 -> NaN). Adlı fonksiyon: joblib için."""
+    return df.apply(pd.to_numeric, errors="coerce").astype(float)
+
+
+def make_big_hist_gb() -> TransformedTargetRegressor:
+    """Büyük veri (300 bin ilan) için HistGB: sıra kodlama + yerel kategori desteği.
+
+    One-hot, ~10 bin farklı model adıyla binlerce sütun açar ve belleğe sığmaz. Bunun yerine
+    kategoriler sıra numarasına çevrilir ve HistGB bunları kendi kategori desteğiyle ayırır:
+    hızlı ve bellek dostu. Nadir (20'den az görülen) sınıflar tek "seyrek" grupta birleşir,
+    en çok 250 sınıf tutulur, eğitimde görülmeyen yeni sınıf hata vermez (NaN olur).
+    Yüksek öğrenme adımı sayısı (1500) ve küçük hız (0,05), büyük veride ince ayrım içindir;
+    erken durdurma kapalı: iterasyon sayısı sabit, sonuç tekrarlanabilir.
+    """
+    cat = Pipeline(
+        [
+            ("obj", FunctionTransformer(_to_object, feature_names_out="one-to-one")),
+            ("fill", SimpleImputer(strategy="constant", fill_value="Bilinmiyor")),
+            (
+                "ord",
+                OrdinalEncoder(
+                    handle_unknown="use_encoded_value",
+                    unknown_value=np.nan,
+                    min_frequency=20,
+                    max_categories=250,
+                ),
+            ),
+        ]
+    )
+    num = FunctionTransformer(_to_float, feature_names_out="one-to-one")
+    pre = ColumnTransformer([("num", num, NUM_COLS), ("cat", cat, CAT_COLS)]).set_output(
+        transform="pandas"
+    )
+    reg = HistGradientBoostingRegressor(
+        learning_rate=0.05,
+        max_iter=1500,
+        max_leaf_nodes=63,
+        min_samples_leaf=40,
+        categorical_features=[f"cat__{c}" for c in CAT_COLS],
+        # Km artınca fiyat düşer, yıl artınca artar; kısıt eğriyi tutarlı tutar.
+        monotonic_cst={"num__mileage": -1, "num__year": 1},
+        early_stopping=False,
+        random_state=RANDOM_STATE,
+    )
+    pipe = Pipeline([("pre", pre), ("reg", reg)])
+    return TransformedTargetRegressor(regressor=pipe, func=np.log1p, inverse_func=np.expm1)
+
+
 def make_final_model() -> TransformedTargetRegressor:
-    """Arama sonucunda seçilen model ve parametreleri (train.py ve arayüz bunu kullanır)."""
+    """Seçilen model (train.py ve arayüz bunu kullanır)."""
+    if BEST_MODEL == "big_hist_gb":
+        return make_big_hist_gb()
     if BEST_MODEL == "random_forest":
         return make_random_forest(**BEST_PARAMS)
     return make_hist_gb(**BEST_PARAMS)

@@ -6,14 +6,12 @@ import pytest
 
 from src.ml.config import CAT_COLS, FEATURES
 from src.ml.evaluate import evaluate
-from src.ml.models import make_final_model, make_linear_model
+from src.ml.models import make_big_hist_gb, make_final_model, make_linear_model
 
 
-@pytest.fixture
-def synthetic():
-    """40 satırlık sahte veri; bazı sayısal ve kategorik değerler bilerek eksik."""
+def _synthetic(n: int):
+    """Sahte veri; bazı sayısal ve kategorik değerler bilerek eksik."""
     rng = np.random.default_rng(0)
-    n = 40
     df = pd.DataFrame(
         {
             "year": rng.integers(2000, 2024, n).astype(float),
@@ -27,6 +25,7 @@ def synthetic():
             "drive": rng.choice(["Önden çekiş", "4x4"], n).astype(object),
             "body_type": rng.choice(["Sedan", "SUV"], n).astype(object),
             "title_status": rng.choice(["Temiz", "Pert kayıtlı"], n).astype(object),
+            "seller_type": rng.choice(["Galeri", "Bireysel"], n).astype(object),
         }
     )[FEATURES]
     df.loc[[1, 5, 9], "year"] = np.nan
@@ -38,7 +37,23 @@ def synthetic():
     return df, y.clip(lower=1000)
 
 
-@pytest.mark.parametrize("maker", [make_linear_model, make_final_model])
+@pytest.fixture
+def synthetic():
+    return _synthetic(40)
+
+
+def test_big_hist_gb_fits_and_predicts_on_unseen_categories():
+    X, y = _synthetic(200)
+    model = make_big_hist_gb().fit(X, y)
+    new = X.iloc[:3].copy()
+    new["brand"] = "Hiç görülmemiş marka"  # eğitimde yok: hata vermemeli
+    new["seller_type"] = None
+    for frame in (X, new):
+        pred = model.predict(frame)
+        assert np.isfinite(pred).all() and (pred > 0).all()
+
+
+@pytest.mark.parametrize("maker", [make_linear_model, make_final_model, make_big_hist_gb])
 def test_model_fits_and_predicts_positive_finite(maker, synthetic):
     X, y = synthetic
     model = maker().fit(X, y)

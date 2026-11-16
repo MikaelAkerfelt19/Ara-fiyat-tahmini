@@ -21,6 +21,7 @@ def get_options() -> dict[str, list[str]]:
         "drive": ["4x4", "Arkadan itiş", "Önden çekiş"],
         "body_type": ["Hatchback", "SUV", "Sedan", "Station wagon"],
         "title_status": ["Ağır hasarlı", "Ağır hasarlı (onarılmış)", "Temiz"],
+        "seller_type": ["Bireysel", "Galeri"],
     }
 
 

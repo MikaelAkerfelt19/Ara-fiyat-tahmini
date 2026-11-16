@@ -17,6 +17,7 @@ class CarInput:
     drive: str | None = None
     body_type: str | None = None
     title_status: str | None = None
+    seller_type: str | None = None  # "Galeri" / "Bireysel"; bilinmiyorsa None
 
     def to_dict(self) -> dict:
         return asdict(self)

@@ -23,7 +23,7 @@
 - Sütun adı: `price`
 - Para birimi: USD
 - Min / medyan / max: 0 / 9.500 / 5.771.710
-- Dağılım: Çok sağa çarpık (çarpıklık yaklaşık 27,6); birkaç aşırı uç değer var. Log dönüşümü modelleme aşamasında denenecek. Uç değerler `filter_train_rows()` ile eğitimden çıkarılır.
+- Dağılım: Çok sağa çarpık (çarpıklık yaklaşık 27,6); birkaç aşırı uç değer var. Log dönüşümü modelleme aşamasında denenecek. Hatalı ve uç fiyatlar `filter_train_rows()` ile eğitimden çıkarılır (§6).
 
 ## 4. Sütunlar
 
@@ -77,24 +77,68 @@
 | 11 | Model adlarından tire kaldırıldı, "Range Rover" gibi iki kelimelik adlar birleştirildi, markanın tekrarı atlandı | "F-150" ile "F150" aynı araç; model sayısı azalır, her modelde daha çok örnek olur | Tümü |
 | 12 | Model adındaki tek harf sonraki kelimeyle bitişik yazıldı ("C 250" → "C250", "G 35" → "G35"); rakamla başlayanlar ("3 Series") ve "Model 3" gibi adlar boşluklu kaldı | Veride "C 250" ile "C250" aynı araç; model sayısı azalır | Tek harfli model adları |
 | 13 | `title_status` etiketleri: salvage "Ağır hasarlı", rebuilt "Ağır hasarlı (onarılmış)" | Türkiye'de onarılmış araç da ağır hasar kayıtlı sayılır; "pert" yerine yaygın terim kullanılır | title_status dolu satırlar |
+| 14 | `seller_type` ("Galeri" / "Bireysel") eklendi. Kaggle'da etiket yok: `features_list` + `title` metninde galeri kalıbı (`DEALER_PATTERN`) aranır; vehicles'ta gerçek `seller_type` sütunu kullanılır | Galeri ve bireysel fiyatı farklıdır; kalıp vehicles etiketine karşı sınandı (%86 doğru, bkz. §8) | Tümü |
+| 15 | Başlıktan marka çıkmazsa vehicles `manufacturer` sütunu yedek olur ("rover" → Land Rover) | Başlıkta marka olmayan ilanlar boşa gitmesin; satır silinmez | vehicles |
+| 16 | `odometer_broken` / `odometer_rolled_over` = 1 ise km boş yapılır | Bozuk sayaç km'si yanıltıcıdır; satır silinmez, eğitimde "km yok" kuralıyla elenir | vehicles |
+| 17 | Çıktıya `title` sütunu eklendi (veritabanına yazılmaz) | İki set arasında aynı ilanı bulmak (sızıntı kontrolü, §8) | Tümü |
+| 18 | Eski %0,5 / %99,5 fiyat yüzdelik kuralı kaldırıldı; yerine sabit çöp kuralları (§6) | Yüzdelik, verinin ne kadar kirli olduğuna bağlıdır ve iyi ilanları da keser; sabit kurallar açıklanabilir | Eğitim |
 
 ## 6. Eğitimden çıkarılan satırlar
 
-`filter_train_rows()` içinde uygulanır. **Test verisine uygulanmaz.**
+`filter_train_rows()` içinde uygulanır. **Test verisine uygulanmaz.** Kurallar sırayla çalışır; her satır, öncekilerden **kalan** satırlar üzerinden sayılır. Sayıları `python -m src.db.load_data` yazdırır (`filter_report()`).
 
-| Kural | Çıkarılan satır | Kalan satır |
-|---|---|---|
-| Tamamen aynı (tekrar) satırlar | 0 | 784 |
-| Fiyat 500 USD altı | 5 | 779 |
-| Fiyat uç değerleri (%0,5 altı ve %99,5 üstü) | 8 | 771 |
+| Kural | Neden | Kaggle (784) | vehicles (295.451) |
+|---|---|---|---|
+| Marka bulunamayan | Araç olmayan ilan (bisiklet, ekskavatör, reklam) | 40 | 4.453 |
+| Fiyat 1.000 $ altı | Peşinat, "ara" ilanı, tek haneli fiyat; gerçek satış fiyatı değil | 6 | 14.409 |
+| Fiyat 250.000 $ üstü | Çoğunlukla fazladan yazılmış sıfır | 0 | 212 |
+| Yıl 1950 öncesi veya yok | Yıl en güçlü özellik; koleksiyon araçları ayrı bir piyasa | 62 | 903 |
+| Km yok, 600.000 üstü veya bozuk sayaç | İkinci en güçlü özellik eksik ya da güvenilmez | 13 | 7.620 |
+| 2.000 km altı ama 2024 öncesi | Eski araçta bu km sayaç sıfırlanması / girilmemiş değerdir (sahte km) | 10 | 2.029 |
+| "Parça için" ruhsat | Çalışan araç fiyatını bozar | 1 | 55 |
+| Tekrar ilan (marka, model, yıl, km, fiyat aynı) | Aynı ilan birden çok kez girilmiş | 0 | 98.042 |
+| **Kalan** | | **652** | **167.728** |
+
+Kaggle ilanlarıyla (başlık, fiyat) çakışan 17 ilan ayrıca vehicles'tan çıkarılır (§8); eğitimde 167.711 vehicles ilanı kalır.
 
 ## 7. EDA'dan öne çıkanlar
 
 Grafikler `docs/img/` altında, kodu `notebooks/02_eda.ipynb` içindedir.
 
-- Temizlik sonrası 771 ilan var. Fiyat medyanı 9.500 USD, ortalaması yaklaşık 15.287 USD; dağılım hâlâ sağa çarpık (çarpıklık yaklaşık 3,2). Log dönüşümü dağılımı dengeliyor (`fiyat_dagilimi.png`).
+- (Bu bölümdeki sayılar eski filtreyle, 771 ilan üzerinden alındı; yeni filtre 652 ilan bırakır.) Temizlik sonrası 771 ilan var. Fiyat medyanı 9.500 USD, ortalaması yaklaşık 15.287 USD; dağılım hâlâ sağa çarpık (çarpıklık yaklaşık 3,2). Log dönüşümü dağılımı dengeliyor (`fiyat_dagilimi.png`).
 - Model yılı ile fiyat arasında güçlü pozitif ilişki var (Spearman yaklaşık 0,56); yeni araçlar pahalı (`yil_fiyat.png`).
 - Kilometre ile fiyat ters ilişkili (Spearman yaklaşık -0,53); yıl ile kısmen aynı bilgiyi taşır (`km_fiyat.png`).
 - Marka fiyatı belirgin etkiler: en sık 15 marka içinde medyan Tesla yaklaşık 27.950 USD, Chevrolet yaklaşık 14.950 USD, BMW yaklaşık 14.250 USD; Nissan yaklaşık 5.050 USD (`marka_medyan_fiyat.png`).
 - Eksik değer oranları yüksek: condition %36, drive %35, cylinders %32, body_type %11, year %10. Bu yüzden ön işlemede imputer ve "Bilinmiyor" sınıfı kullanılıyor.
 - İlanların çoğu Toyota (96), Ford (94), Chevrolet (74) ve BMW (58); diğer markalarda örnek az olduğundan marka etkisi gürültülü olabilir.
+
+## 8. İkinci veri seti: vehicles.csv
+
+**Kaynak:** Craigslist ABD ikinci el araç ilanları, eylül-kasım 2026 (`data/raw/vehicles.csv`, yaklaşık 1,1 GB, 295.451 ilan). Dosya isteğe bağlıdır: yoksa sistem yalnız Kaggle verisiyle çalışır. Repoya girmez.
+
+**Neden:** Kaggle verisi yalnızca 652 temiz ilan içerir; 5 katlı ölçümde yalnız Kaggle ile MAE 6.139 $, R² 0,485 çıktı. Aynı 652 ilan üzerinde Kaggle + vehicles (Kaggle ağırlığı 5) ile MAE 4.345 $, R² 0,792 oldu.
+
+**Sütun eşlemesi** (yalnızca gereken 16 sütun okunur, `description` okunmaz):
+
+| vehicles sütunu | Temiz ad | Not |
+|---|---|---|
+| `id` | `id` | `ID`'ye çevrilip `clean()`'e verilir |
+| `price` | `price` | USD |
+| `title` | `year`, `brand`, `model` | Kaggle ile aynı `parse_title()`; ayrıca `title` sızıntı kontrolü için kullanılır |
+| `year` | `year` | Başlıkta yıl yoksa yedek |
+| `manufacturer` | `brand` | Başlıktan marka çıkmazsa yedek ("rover" → Land Rover) |
+| `odometer` | `mileage` | Mil → km |
+| `odometer_broken`, `odometer_rolled_over` | – | 1 ise km boş yapılır |
+| `condition`, `cylinders`, `fuel`, `transmission`, `drive`, `type`, `title_status` | Kaggle ile aynı | Aynı Türkçe etiketlere eşlenir |
+| `seller_type` | `seller_type` | dealer → "Galeri", owner → "Bireysel" |
+
+**Satıcı tipi:** vehicles'ta gerçek etiket var. Kaggle'da yok; ilan metninde `DEALER_PATTERN` (dealer, financ, credit, stock #, warrant, offered by, carfax) aranır. Kalıp vehicles'ta (etiketi bilinen 40.000 ilan) ilanların **%86'sında** doğru sonucu verdi. Yani Kaggle'daki "Galeri" etiketi kusurlu ama işe yarar bir tahmindir.
+
+**Çöp kuralları:** §6'daki tabloda iki set yan yana. vehicles'ta ilanların 98.042'si tekrar (aynı marka, model, yıl, km, fiyat); yani aynı ilan çok kez girilmiş. Çöp temizliğinden sonra 167.728 ilan kalır.
+
+**Sızıntı temizliği:** Ölçümü Kaggle ilanları üzerinde yaptığımız için, aynı ilan vehicles'ta da varsa model cevabı eğitimde görmüş olur. (Başlık, fiyat) çifti Kaggle ile eşleşen ilanlar vehicles'tan çıkarılır: süzülmemiş Kaggle ilanlarından 23'ü vehicles'ta da vardı; çöp temizliğinden sonra vehicles'tan 17 ilan çıkarıldı (167.728 → 167.711).
+
+**Veritabanı:** `cars` tablosuna `seller_type` ve `source` ("kaggle" / "vehicles") sütunları eklendi; toplam 168.363 satır (652 + 167.711). `brand` ve `brand+model` üzerinde indeks vardır.
+
+**Dağılım farkı:** vehicles'ın medyan fiyatı Kaggle'dan yüksektir (ham veride 12.500 $ ve 9.500 $) ve ilanların %73,9'u galeri (Kaggle'da metin tahminiyle %46). Bu yüzden Kaggle ilanları eğitimde 5 kat ağırlık alır (`KAGGLE_WEIGHT`).
+

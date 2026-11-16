@@ -31,6 +31,7 @@ def _cars(n: int = 40) -> pd.DataFrame:
             "drive": "Önden çekiş",
             "body_type": "Sedan",
             "title_status": "Temiz",
+            "seller_type": rng.choice(["Galeri", "Bireysel"], n),
             "price": (year - 1995) * 700.0 + rng.normal(0, 300, n) + 1000,
         }
     )

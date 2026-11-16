@@ -157,3 +157,59 @@ def test_calibrate_keeps_price_non_increasing_in_km():
     assert loc["km_ramp"] == list(KM_RAMP)
     assert set(loc) >= {"default", "segments", "overrides", "references"}
     assert all({"base", "fitted_tl", "error_pct"} <= set(r) for r in loc["references"])
+
+
+class _SellerModel:
+    """Sahte model: galeri %20 pahalı, bireysel baz fiyat."""
+
+    def predict(self, frame):
+        factor = np.where(frame["seller_type"] == "Galeri", 1.2, 1.0)
+        return 10_000.0 * factor
+
+
+def test_unknown_seller_is_geometric_mean_of_both_types():
+    features = ["mileage", "seller_type"]
+    car = {**_CAR, "mileage": 50_000}
+    galeri, usd_g = tl_price(_SellerModel(), features, {**car, "seller_type": "Galeri"}, 40.0, LOC)
+    birey, usd_b = tl_price(_SellerModel(), features, {**car, "seller_type": "Bireysel"}, 40.0, LOC)
+    mixed, usd_m = tl_price(_SellerModel(), features, {**car, "seller_type": None}, 40.0, LOC)
+    assert galeri == pytest.approx(birey * 1.2)
+    assert mixed == pytest.approx(math.sqrt(galeri * birey))
+    assert usd_m == pytest.approx(math.sqrt(usd_g * usd_b))
+    # seller_type anahtarı hiç yoksa da aynı sonuç (None sayılır)
+    assert tl_price(_SellerModel(), features, car, 40.0, LOC)[0] == pytest.approx(mixed)
+
+
+def test_unknown_seller_keeps_km_envelope_and_heavy_damage():
+    features = ["mileage", "seller_type", "title_status"]
+
+    class _Bumpy:
+        def predict(self, frame):
+            km = np.nan_to_num(frame["mileage"].to_numpy(dtype=float))
+            seller = np.where(frame["seller_type"] == "Galeri", 1.3, 1.0)
+            return (10_000.0 + 3_000.0 * np.sin(km / 3_700.0)) * seller
+
+    prices = [
+        tl_price(_Bumpy(), features, {**_CAR, "mileage": km, "seller_type": None}, 40.0, LOC)[0]
+        for km in range(0, 150_001, 1_111)
+    ]
+    assert all(b <= a + 1e-9 for a, b in zip(prices, prices[1:], strict=False))
+    car = {**_CAR, "mileage": 80_000, "seller_type": None}
+    clean_price, _ = tl_price(_Bumpy(), features, car, 40.0, LOC)
+    damaged, _ = tl_price(_Bumpy(), features, {**car, "title_status": "Ağır hasarlı"}, 40.0, LOC)
+    assert damaged == pytest.approx(clean_price * 0.65)
+
+
+def test_calibrate_uses_mixed_seller_for_references():
+    class _SellerCliff(_CliffModel):
+        def predict(self, frame):
+            seller = np.where(frame["seller_type"] == "Galeri", 1.5, 1.0)
+            return super().predict(frame) * seller
+
+    loc = calibrate(_SellerCliff(), 50.0, "test")
+    plain = calibrate(_CliffModel(), 50.0, "test")
+    # Referans seller_type=None: tahmin sqrt(1,5 x 1,0) = 1,2247 kat; oran o kadar düşer
+    ratios = [
+        r["ratio"] / p["ratio"] for r, p in zip(loc["references"], plain["references"], strict=True)
+    ]
+    assert ratios == pytest.approx([1 / math.sqrt(1.5)] * len(ratios))

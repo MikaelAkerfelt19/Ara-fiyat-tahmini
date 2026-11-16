@@ -32,6 +32,8 @@ Veri setini repoya koymuyoruz. Herkes kendi bilgisayarına indirir.
 2. **Data** sekmesinden **Download All** ile zip'i indir.
 3. Zip'in içindekileri `data/raw/` klasörüne çıkar (`data/raw/train.csv` vb.).
 
+**İsteğe bağlı ikinci veri seti:** `vehicles.csv` (yaklaşık 295 bin Craigslist ilanı, 1 GB) varsa `data/raw/vehicles.csv` olarak koy. Dosya yoksa sistem yalnız Kaggle verisiyle çalışır, ama model belirgin biçimde daha az doğru olur (bkz. [docs/MODEL.md](docs/MODEL.md)). Dosya repoya girmez.
+
 Kaggle CLI kullanmak istersen: `kaggle competitions download -c used-car-price-prediction-challenge -p data/raw`. Bunun için Kaggle API anahtarın gerekir. **Anahtar dosyasını (`kaggle.json`) asla repoya ekleme.**
 
 ## Çalıştırma
@@ -41,6 +43,7 @@ Kaggle CLI kullanmak istersen: `kaggle competitions download -c used-car-price-p
 ```bash
 python -m src.db.load_data      # data/cars.db dosyasını oluşturur
 python -m src.ml.train          # model.joblib, model_meta.json ve localization.json üretir
+                                # (vehicles.csv ile birkaç dakika sürer, ilerleme yazdırılır)
 streamlit run app.py            # arayüzü gerçek servisle açar (USE_MOCK ayarlama)
 ```
 

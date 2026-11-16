@@ -11,13 +11,27 @@ CAT_COLS = [
     "drive",
     "body_type",
     "title_status",
+    "seller_type",  # "Galeri" / "Bireysel"
 ]
 FEATURES = NUM_COLS + CAT_COLS
 RANDOM_STATE = 42
 RAW_TRAIN_PATH = "data/raw/train_data_v2.csv"
 RAW_TEST_PATH = "data/raw/test_data_v2.csv"
+# İkinci, büyük veri seti (295 bin Craigslist ilanı). Dosya yoksa sistem yalnız Kaggle ile çalışır.
+RAW_VEHICLES_PATH = "data/raw/vehicles.csv"
 MILE_TO_KM = 1.609344
-MIN_PRICE_USD = 500
+# 1.000 $ altı ilanlar çoğunlukla gerçek fiyat değil: peşinat, "ara" ilanı, tek haneli fiyatlar.
+MIN_PRICE_USD = 1_000
+# 250.000 $ üstü ilanlar büyük olasılıkla girdi hatası (fazladan sıfır); sıradan araç değil.
+MAX_PRICE_USD = 250_000
+# Metinde bu kalıplardan biri geçen ilan "Galeri" sayılır. vehicles.csv'de gerçek etiket
+# (dealer/owner) olduğundan kalıp oraya karşı sınandı: ilanların %86'sını doğru bildi.
+DEALER_PATTERN = r"\bdealer|financ|credit|stock\s*#|stock number|warrant|offered by|carfax"
+# Kaggle ilanları eğitimde 5 kat ağırlık alır: asıl hedef bizim yarışma verisi,
+# model ona daha çok uysun. Ölçüm: 5 katlı CV MAE 6139 $ -> 4345 $ (R² 0,485 -> 0,792).
+KAGGLE_WEIGHT = 5.0
+# Arayüzdeki model listesinde yer alması için bir modelin en az bu kadar ilanı olmalı.
+MIN_MODEL_LISTINGS = 20
 
 # Görünen marka adları
 CANONICAL_BRANDS = [
@@ -42,6 +56,7 @@ BRAND_ALIASES = {
     "infinity": "Infiniti",
     "catilac": "Cadillac",
     "landrover": "Land Rover",
+    "rover": "Land Rover",  # vehicles.csv manufacturer değeri
     "rolls royce": "Rolls-Royce",
 }
 
@@ -95,7 +110,8 @@ PREMIUM_BRANDS = {
     "Maserati", "McLaren", "Mercedes-Benz", "Porsche", "Rolls-Royce", "Volvo",
 }  # fmt: skip
 SUV_BODY_TYPES = {"SUV", "Pikap", "Kamyonet", "Arazi"}
-# Türkiye piyasa fiyatları (Kaan, sahibinden/arabam.com, 16 Kasım 2026). Hepsi benzinli otomatik,
+# Türkiye piyasa fiyatları (Kaan, 16 Kasım 2026): sahibinden.com ortalama fiyatları,
+# galeri+bireysel karışık (seller_type bilinmiyor sayılır). Hepsi benzinli otomatik,
 # temiz ruhsat; Tesla elektrikli.
 REFERENCE_CARS = [  # (brand, model, year, km, fuel_type, body_type, fiyat_TL)
     ("Honda", "Civic", 2017, 200_000, "Benzin", "Sedan", 1_250_000),

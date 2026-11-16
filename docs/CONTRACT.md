@@ -30,6 +30,7 @@ class CarInput:
     drive: str | None = None
     body_type: str | None = None
     title_status: str | None = None
+    seller_type: str | None = None  # "Galeri" / "Bireysel"; bilinmiyorsa None
 
     def to_dict(self) -> dict:
         return asdict(self)
@@ -67,7 +68,7 @@ Arayüz bunları `from src.core.api import service` ile alır ve `service.predic
 | `get_options() -> dict[str, list[str]]` | Alan adı → seçenekler | Açılır listeler (marka, yakıt, vites…) | Değerler alfabetik sıralı ve tekrarsızdır. `model` alanı **yoktur**, o markaya bağlıdır |
 | `get_models_for_brand(brand: str) -> list[str]` | Model adları | Marka seçilince model listesi | Bilinmeyen marka için `[]` döner |
 | `get_ranges() -> dict[str, tuple[float, float]]` | Alan adı → (min, max) | Sayı kutularının sınırları | Verinin %1 ve %99 yüzdeliklerinden hesaplanır |
-| `predict(car: CarInput) -> Prediction` | Tahmin | "Fiyatı Tahmin Et" butonu | TL fiyat = USD tahmin x güncel TCMB USD/TRY kuru x taban katsayı x km çarpanı x (ağır hasarlıysa 0,65). Taban önceliği: marka+model, sonra segment (elektrik, premium, suv, ekonomik), sonra genel. Km çarpanı 120.000-140.000 km arasında 1'den üst sınıra doğrusal yükselir; üst sınır modelin kendi fiyat kırılmasından türetilir, böylece km arttıkça TL fiyat yükselmez. Ayrıca km zarfı uygulanır: 0 km'den aracın km'sine 20.000 km adımlı ızgarada fiyat hesaplanıp en küçüğü alınır (daha düşük km'li hal daha ucuz olamaz); ağır hasarlıda model "Temiz" fiyatlar, sonra tam x0,65 uygulanır. Ağır hasarlı: tapu durumu "Ağır hasarlı" veya "Ağır hasarlı (onarılmış)". Geçersiz girdide `ValueError`, model yoksa `ModelNotReadyError` fırlatır |
+| `predict(car: CarInput) -> Prediction` | Tahmin | "Fiyatı Tahmin Et" butonu | TL fiyat = USD tahmin x güncel TCMB USD/TRY kuru x taban katsayı x km çarpanı x (ağır hasarlıysa 0,65). Taban önceliği: marka+model, sonra segment (elektrik, premium, suv, ekonomik), sonra genel. Km çarpanı 120.000-140.000 km arasında 1'den üst sınıra doğrusal yükselir; üst sınır modelin kendi fiyat kırılmasından türetilir, böylece km arttıkça TL fiyat yükselmez. Ayrıca km zarfı uygulanır: 0 km'den aracın km'sine 1.000 km adımlı ızgarada fiyat hesaplanıp en küçüğü alınır (daha düşük km'li hal daha ucuz olamaz); ağır hasarlıda model "Temiz" fiyatlar, sonra tam x0,65 uygulanır. Satıcı tipi (`seller_type`) `None` ise fiyat "Galeri" ve "Bireysel" için ayrı hesaplanır ve geometrik ortalaması alınır (piyasa ortalaması). Ağır hasarlı: tapu durumu "Ağır hasarlı" veya "Ağır hasarlı (onarılmış)". Geçersiz girdide `ValueError`, model yoksa `ModelNotReadyError` fırlatır |
 | `save_prediction(car: CarInput, pred: Prediction) -> None` | – | `predict`'ten hemen sonra | `predictions` tablosuna bir satır yazar |
 | `get_history(limit: int = 20) -> list[dict]` | Son tahminler | "Son tahminler" bölümü | En yeni en üstte. Her sözlükte `created_at`, girdi alanları ve `price` bulunur |
 | `get_model_info() -> dict` | Model bilgisi | "Model hakkında" bölümü | Anahtarlar: `model_name`, `version`, `trained_at`, `mae`, `rmse`, `r2`, `n_train`, `metrics_currency`. Model yoksa değerler `None` olur. Model metrikleri (`mae`, `rmse`) USD cinsindendir; `metrics_currency` bunu belirtir |
@@ -76,7 +77,8 @@ Arayüz bunları `from src.core.api import service` ile alır ve `service.predic
 - Fiyatlar TL cinsindendir: TCMB günlük USD satış kuru × Türkiye piyasa katsayısı.
 - Kilometre (`mileage`) km cinsindendir.
 - Kategori değerleri (yakıt, vites, durum, çekiş, kasa, tapu durumu) Türkçe etiketlerdir.
-- İsteğe bağlı alanlar (`condition`, `cylinders`, `drive`, `body_type`, `title_status`) `None` olabilir.
+- İsteğe bağlı alanlar (`condition`, `cylinders`, `drive`, `body_type`, `title_status`, `seller_type`) `None` olabilir. `seller_type` değerleri "Galeri" ve "Bireysel"dir.
+- `get_models_for_brand` yalnızca en az 20 ilanı olan modelleri döndürür (çok nadir model adları listeyi kullanılmaz yapar).
 - `get_model_info()` sonucundaki `metrics_currency` anahtarı model metriklerinin USD olduğunu belirtir.
 
 ## 4. Mock ve gerçek servis seçimi: `src/core/api.py`
@@ -123,6 +125,7 @@ def get_options() -> dict[str, list[str]]:
         "drive": ["4x4", "Arkadan itiş", "Önden çekiş"],
         "body_type": ["Hatchback", "SUV", "Sedan", "Station wagon"],
         "title_status": ["Ağır hasarlı", "Ağır hasarlı (onarılmış)", "Temiz"],
+        "seller_type": ["Bireysel", "Galeri"],
     }
 
 
@@ -190,8 +193,9 @@ def get_model_info() -> dict:
 ```sql
 -- Temizlenmiş veri. pandas.to_sql ile oluşturulur; sütunlar DATA.md'deki "temiz ad"lardır.
 -- cars (id, year, mileage, cylinders, brand, model, fuel_type, transmission,
---       condition, drive, body_type, title_status, price)
--- price: USD. mileage: km.
+--       condition, drive, body_type, title_status, seller_type, price, source)
+-- price: USD. mileage: km. seller_type: "Galeri" / "Bireysel".
+-- source: "kaggle" (yarışma verisi) veya "vehicles" (ikinci, büyük veri seti).
 
 CREATE TABLE IF NOT EXISTS predictions (
     id              INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -226,3 +230,4 @@ CREATE TABLE IF NOT EXISTS model_runs (
 | 16 Kasım 2026 | Gerçek servis: TCMB kuru ve Türkiye piyasa katsayısı | Kaan |
 | 16 Kasım 2026 | Yumuşak km çarpanı (band yerine), ağır hasar %35 indirimi; title_status etiketleri "Ağır hasarlı" / "Ağır hasarlı (onarılmış)" | Kaan |
 | 16 Kasım 2026 | Monoton kısıtlı model (km −, yıl +), km zarfı ve ağır hasarın tam x0,65 uygulanması (`tl_price`) | Kaan |
+| 16 Kasım 2026 | İkinci veri seti (vehicles.csv): `CarInput.seller_type` (Galeri/Bireysel, isteğe bağlı), `get_options` içinde `seller_type`, `cars` tablosuna `seller_type` ve `source`; belirtilmeyen satıcı tipi iki tipin geometrik ortalaması | Kaan |

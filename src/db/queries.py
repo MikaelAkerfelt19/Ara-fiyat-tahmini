@@ -7,6 +7,7 @@ from datetime import datetime
 import pandas as pd
 
 from src.db.schema import connect
+from src.ml.config import MIN_MODEL_LISTINGS
 
 
 def load_cars() -> pd.DataFrame:
@@ -27,10 +28,13 @@ def distinct_values(columns: list[str]) -> dict[str, list[str]]:
 
 
 def models_for_brand(brand: str) -> list[str]:
+    # Binlerce nadir model adı açılır listeyi kullanılmaz yapar. Model zaten ilan sayısı az
+    # (min_frequency) modelleri "diğer" grubunda sayar, yani listeden çıkarmak tahmini bozmaz.
     with closing(connect()) as conn:
         rows = conn.execute(
-            "SELECT DISTINCT model FROM cars WHERE brand = ? AND model IS NOT NULL ORDER BY 1",
-            (brand,),
+            "SELECT model FROM cars WHERE brand = ? AND model IS NOT NULL "
+            "GROUP BY model HAVING COUNT(*) >= ? ORDER BY model",
+            (brand, MIN_MODEL_LISTINGS),
         ).fetchall()
     return [r[0] for r in rows]
 

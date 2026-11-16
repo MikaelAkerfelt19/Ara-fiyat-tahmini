@@ -30,9 +30,15 @@ def test_distinct_values_sorted_without_null(db):
     assert queries.distinct_values(["brand"]) == {"brand": ["Ford", "Toyota"]}
 
 
-def test_models_for_brand(db):
+def test_models_for_brand_applies_min_listing_threshold(db, monkeypatch):
+    # Eşik 1: tüm modeller listelenir (alfabetik)
+    monkeypatch.setattr(queries, "MIN_MODEL_LISTINGS", 1)
     assert queries.models_for_brand("Toyota") == ["Camry", "Corolla"]
     assert queries.models_for_brand("Yok") == []
+    # Eşik 2: yalnızca iki ilanı olan Camry kalır; tek ilanlı Corolla düşer
+    monkeypatch.setattr(queries, "MIN_MODEL_LISTINGS", 2)
+    assert queries.models_for_brand("Toyota") == ["Camry"]
+    assert queries.models_for_brand("Ford") == []
 
 
 def test_numeric_ranges_ignore_nan(db):
