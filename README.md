@@ -17,8 +17,8 @@ Model, Kaggle **Used Car Price Prediction Challenge** verisi ve aynı kaynaktan 
 
 | Kişi | Sorumluluk |
 |---|---|
-| Kaan Demir | Veri, veritabanı, model eğitimi, servis katmanı (backend) |
-| `meng-IO` | Streamlit arayüzü (frontend) |
+| Demir Kaan Demir | Veri, veritabanı, model eğitimi, servis katmanı (backend) |
+| Osman Mengi | Streamlit arayüzü (frontend) |
 
 ## Teknolojiler
 
