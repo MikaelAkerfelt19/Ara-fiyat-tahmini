@@ -88,6 +88,11 @@
 
 ## 7. EDA'dan öne çıkanlar
 
-_(EDA sonrası doldurulacak)_
+Grafikler `docs/img/` altında, kodu `notebooks/02_eda.ipynb` içindedir.
 
--
+- Temizlik sonrası 771 ilan var. Fiyat medyanı 9.500 USD, ortalaması yaklaşık 15.287 USD; dağılım hâlâ sağa çarpık (çarpıklık yaklaşık 3,2). Log dönüşümü dağılımı dengeliyor (`fiyat_dagilimi.png`).
+- Model yılı ile fiyat arasında güçlü pozitif ilişki var (Spearman yaklaşık 0,56); yeni araçlar pahalı (`yil_fiyat.png`).
+- Kilometre ile fiyat ters ilişkili (Spearman yaklaşık -0,53); yıl ile kısmen aynı bilgiyi taşır (`km_fiyat.png`).
+- Marka fiyatı belirgin etkiler: en sık 15 marka içinde medyan Tesla yaklaşık 27.950 USD, Chevrolet yaklaşık 14.950 USD, BMW yaklaşık 14.250 USD; Nissan yaklaşık 5.050 USD (`marka_medyan_fiyat.png`).
+- Eksik değer oranları yüksek: condition %36, drive %35, cylinders %32, body_type %11, year %10. Bu yüzden ön işlemede imputer ve "Bilinmiyor" sınıfı kullanılıyor.
+- İlanların çoğu Toyota (96), Ford (94), Chevrolet (74) ve BMW (58); diğer markalarda örnek az olduğundan marka etkisi gürültülü olabilir.
