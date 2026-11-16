@@ -1,13 +1,12 @@
-# Hafta 0 (B0): kurulumdan sonra `pip freeze` çıktısındaki sürümlerle
-# bu satırları sabitleyin, örn. scikit-learn==1.x.y
-# İki bilgisayarda scikit-learn sürümü aynı olmazsa model dosyası yüklenmeyebilir.
+# Python 3.12 ortamında kurulan doğrudan bağımlılıkların sürümleri sabitlendi.
+# Modelin yüklenebilmesi için iki bilgisayarda scikit-learn sürümü aynı olmalı.
 
-streamlit
-pandas
-numpy
-scikit-learn
-joblib
-matplotlib
-jupyter
-pytest
-ruff
+streamlit==1.65.0
+pandas==3.0.6
+numpy==2.5.4
+scikit-learn==1.9.1
+joblib==1.6.0
+matplotlib==3.11.2
+jupyter==1.1.1
+pytest==9.1.1
+ruff==0.17.0

@@ -8,6 +8,14 @@ Bu dosya, bu repoda çalışan kodlama ajanları (Codex vb.) için kalıcı kura
 
 **Kesin şart:** Her şey Python ile yazılır. Arayüz Streamlit, veritabanı SQLite, model scikit-learn.
 
+## Ekip ve Codex kapsamı
+
+- Backend sorumlusu: Kaan (`MikaelAkerfelt19`).
+- Frontend sorumlusu: `meng-IO`.
+- Codex'in uygulama geliştirme görevleri backend kapsamındadır. Frontend kodu ve
+  frontend özellikleri `meng-IO` tarafından geliştirilir; bu oturumlarda frontend
+  uygulaması yapılmaz. Ortak servis sözleşmesi ve repo kurulumu backend görevlerine dahildir.
+
 Çalışmaya başlamadan önce şunları oku:
 1. `docs/PLAN.md`: mimari, klasör yapısı, takvim
 2. `docs/CONTRACT.md`: arayüz ile backend arasındaki servis sözleşmesi
