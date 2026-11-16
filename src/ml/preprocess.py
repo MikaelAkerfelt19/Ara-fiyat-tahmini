@@ -75,6 +75,10 @@ def parse_title(title: str) -> tuple[int | None, str | None, str | None]:
     words = [rest[0]]
     if (rest[0] in _FILLER_TOKENS or len(rest[0]) == 1) and len(rest) > 1:
         words.append(rest[1])
+        # Tek HARF ("C 250", "G 35") bitişik yazılır: veride "C 250" ile "C250" aynı araç.
+        # Rakamla başlayanlar ("3 Series") ve filler kelimeler ("Model 3") boşluklu kalır.
+        if len(rest[0]) == 1 and rest[0].isalpha():
+            return year, brand, _format_word((rest[0] + rest[1]).replace("-", ""))
     # Tireler kaldırılır; "F-150" ile "F150" aynı model sayılır
     return year, brand, " ".join(_format_word(w.replace("-", "")) for w in words)
 

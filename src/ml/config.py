@@ -80,8 +80,8 @@ BODY_LABELS = {
 }
 TITLE_STATUS_LABELS = {
     "clean": "Temiz",
-    "salvage": "Pert kayıtlı",
-    "rebuilt": "Onarılmış pert",
+    "salvage": "Ağır hasarlı",
+    "rebuilt": "Ağır hasarlı (onarılmış)",
     "lien": "Rehinli",
     "missing": "Belgesiz",
     "parts only": "Parça için",
@@ -106,5 +106,20 @@ REFERENCE_CARS = [  # (brand, model, year, km, fuel_type, body_type, fiyat_TL)
     ("BMW", "X5", 2020, 150_000, "Benzin", "SUV", 3_750_000),
     ("Porsche", "Cayenne", 2014, 190_000, "Benzin", "SUV", 4_150_000),
     ("Tesla", "Model 3", 2021, 130_000, "Elektrik", "Sedan", 2_200_000),
+    # Düşük km'li örnekler (Kaan, 16 Kasım 2026)
+    ("Honda", "Civic", 2020, 80_000, "Benzin", "Sedan", 1_750_000),
+    ("Toyota", "Corolla", 2019, 100_000, "Benzin", "Sedan", 1_400_000),
+    ("Toyota", "RAV4", 2021, 60_000, "Benzin", "SUV", 4_100_000),
+    ("Mercedes-Benz", "C200", 2018, 90_000, "Benzin", "Sedan", 2_750_000),
 ]
+# Yumuşak km çarpanının yükseldiği aralık. Modelin ABD fiyat kırılması bu aralıkta ölçüldü
+# (120k-140k arasında tahmin yaklaşık x0,71 düşüyor); Türkiye'de böyle bir kırılma yok.
+KM_RAMP = (120_000, 140_000)
+KM_GRID_STEP = 1_000  # km zarfı ızgara adımı (localization.tl_price)
+# Kırılma x km çarpanı en fazla 0,98 olur; böylece km arttıkça TL fiyat asla yükselmez.
+MONOTONIC_MARGIN = 0.98
+# Türkiye'de onarılmış araç da ağır hasar kayıtlı sayılır; iki etiket aynı kuralı alır.
+HEAVY_DAMAGE_STATUSES = {"Ağır hasarlı", "Ağır hasarlı (onarılmış)"}
+# Kaan'ın kararı (16 Kasım 2026): ağır hasarlı araç Türkiye'de %35 daha ucuz.
+HEAVY_DAMAGE_DISCOUNT = 0.35
 USE_MODEL_OVERRIDES = True  # referansı olan marka+model kendi katsayısını kullanır

@@ -20,7 +20,7 @@ def get_options() -> dict[str, list[str]]:
         "condition": ["Hasarlı", "Orta", "Sıfır", "Sıfır gibi", "Çok iyi", "İyi"],
         "drive": ["4x4", "Arkadan itiş", "Önden çekiş"],
         "body_type": ["Hatchback", "SUV", "Sedan", "Station wagon"],
-        "title_status": ["Onarılmış pert", "Pert kayıtlı", "Temiz"],
+        "title_status": ["Ağır hasarlı", "Ağır hasarlı (onarılmış)", "Temiz"],
     }
 
 
@@ -38,6 +38,8 @@ def predict(car: CarInput) -> Prediction:
     price = 30_000 - (2025 - car.year) * 1_200 - car.mileage * 0.04
     price = max(price, 1_500.0) * 40  # USD -> TL
     price = max(price, 60_000.0)
+    if car.title_status in ("Ağır hasarlı", "Ağır hasarlı (onarılmış)"):
+        price *= 0.65  # gerçek servisle tutarlı: ağır hasarlı araç %35 ucuz
     return Prediction(
         price=price,
         low=price * 0.9,

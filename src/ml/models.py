@@ -53,14 +53,18 @@ def make_preprocessor(scale: bool) -> ColumnTransformer:
     )
 
 
-def _wrap(reg, scale: bool) -> TransformedTargetRegressor:
+def _wrap(reg, scale: bool, pandas_out: bool = False) -> TransformedTargetRegressor:
     """Ön işleme + modeli birleştirir ve fiyatı log ölçeğinde öğretir.
 
     Fiyat sağa çarpık olduğu için log1p ile öğrenilir; böylece model oransal hatayı
     küçültür ve pahalı birkaç araba eğitimi domine etmez. Tahmin expm1 ile dolara döner.
     Ön işleme pipeline içinde olduğundan CV'de sızıntı olmaz.
     """
-    pipe = Pipeline([("pre", make_preprocessor(scale)), ("reg", reg)])
+    pre = make_preprocessor(scale)
+    if pandas_out:
+        # Kısıt sözlüğü sütunları adla bulur; adların korunması için pandas çıktısı gerekir
+        pre = pre.set_output(transform="pandas")
+    pipe = Pipeline([("pre", pre), ("reg", reg)])
     return TransformedTargetRegressor(regressor=pipe, func=np.log1p, inverse_func=np.expm1)
 
 
@@ -82,7 +86,14 @@ def make_random_forest(**params) -> TransformedTargetRegressor:
 
 def make_hist_gb(**params) -> TransformedTargetRegressor:
     """Histogram tabanlı gradient boosting: ağaçlar sırayla öncekinin hatasını düzeltir."""
-    return _wrap(HistGradientBoostingRegressor(random_state=RANDOM_STATE, **params), scale=False)
+    # Km artınca fiyat düşer, yıl artınca artar. Az veride ağaçlar bu yönlerde zikzak çizer;
+    # kısıt eğriyi monoton tutar. Sabittir: dışarıdan ezilemez.
+    reg = HistGradientBoostingRegressor(
+        random_state=RANDOM_STATE,
+        monotonic_cst={"num__mileage": -1, "num__year": 1},
+        **params,
+    )
+    return _wrap(reg, scale=False, pandas_out=True)
 
 
 def make_final_model() -> TransformedTargetRegressor:

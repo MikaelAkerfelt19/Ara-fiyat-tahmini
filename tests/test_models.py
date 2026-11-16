@@ -53,3 +53,15 @@ def test_evaluate_keys(synthetic):
     metrics = evaluate(make_linear_model().fit(X, y), X, y)
     assert set(metrics) == {"mae", "rmse", "r2"}
     assert all(isinstance(v, float) for v in metrics.values())
+
+
+def test_final_model_is_monotonic_in_mileage_and_year(synthetic):
+    X, y = synthetic
+    model = make_final_model().fit(X, y)
+    base = X.iloc[[10]].reset_index(drop=True)
+    km_grid = pd.concat([base.assign(mileage=km) for km in range(0, 400_001, 20_000)])
+    km_pred = model.predict(km_grid)
+    assert (np.diff(km_pred) <= 1e-6).all()  # km artınca fiyat artmaz
+    year_grid = pd.concat([base.assign(year=yr) for yr in range(1995, 2025)])
+    year_pred = model.predict(year_grid)
+    assert (np.diff(year_pred) >= -1e-6).all()  # yıl artınca fiyat azalmaz

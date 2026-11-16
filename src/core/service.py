@@ -7,14 +7,13 @@ from functools import lru_cache
 from pathlib import Path
 
 import joblib
-import pandas as pd
 
 from src.core.errors import ModelNotReadyError
 from src.core.fx import get_usd_try
 from src.core.schemas import CarInput, Prediction
 from src.db import queries
 from src.ml.config import CAT_COLS, NUM_COLS
-from src.ml.localization import factor_for
+from src.ml.localization import tl_price
 
 MODEL_PATH = Path("models/model.joblib")
 META_PATH = Path("models/model_meta.json")
@@ -74,11 +73,9 @@ def _validate(car: CarInput) -> None:
 def predict(car: CarInput) -> Prediction:
     _validate(car)
     model, meta, loc = _load_model()
-    X = pd.DataFrame([car.to_dict()])[meta["features"]]
-    usd = float(model.predict(X)[0])
     rate, _ = get_usd_try()
-    # TL fiyat = USD tahmin x güncel kur x Türkiye piyasa katsayısı
-    price = usd * rate * factor_for(car.to_dict(), loc)
+    # TL fiyat = USD tahmin x kur x katsayı; km zarfı ve ağır hasar kuralı tl_price'ta
+    price, _usd = tl_price(model, meta["features"], car.to_dict(), rate, loc)
     q_low, q_high = meta["interval_log_quantiles"]
     return Prediction(
         price=price,

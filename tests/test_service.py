@@ -57,7 +57,13 @@ def ready(tmp_path, monkeypatch):
         "r2": 0.5,
     }
     (tmp_path / "meta.json").write_text(json.dumps(meta), encoding="utf-8")
-    loc = {"default": 1.5, "segments": {"ekonomik": 1.2}, "overrides": {}}
+    loc = {
+        "default": 1.5,
+        "segments": {"ekonomik": 1.1},
+        "overrides": {},
+        "km_ramp": [120_000, 140_000],
+        "km_log_coef": 0.2,
+    }
     (tmp_path / "loc.json").write_text(json.dumps(loc), encoding="utf-8")
     monkeypatch.setattr(service, "MODEL_PATH", tmp_path / "model.joblib")
     monkeypatch.setattr(service, "META_PATH", tmp_path / "meta.json")
@@ -79,6 +85,15 @@ def test_predict_returns_positive_try_price_with_interval(ready, car):
     assert pred.low <= pred.price <= pred.high
     assert pred.currency == "TRY"
     assert pred.usd_try == 40.0
+
+
+@pytest.mark.parametrize("status", ["Ağır hasarlı", "Ağır hasarlı (onarılmış)"])
+def test_heavy_damage_prediction_is_65_percent_of_clean(ready, car, status):
+    car.title_status = "Temiz"
+    clean = service.predict(car)
+    car.title_status = status
+    damaged = service.predict(car)
+    assert damaged.price == pytest.approx(clean.price * 0.65)
 
 
 def test_negative_mileage_is_rejected(ready, car):

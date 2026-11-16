@@ -74,14 +74,15 @@ def main() -> None:
     )
     print(f"Tahmin aralığı (log): {q_low:.3f} .. {q_high:.3f}")
     print(f"Kur: {rate:.4f} ({source})")
-    print("Referans tablosu (model, tahmin USD, oran):")
+    print("Referans tablosu (araç, km, gerçek TL, sistemin TL'si, % hata):")
     for r in loc["references"]:
         print(
-            f"  {r['brand']} {r['model']} {r['year']} [{r['segment']}]: "
-            f"{r['price_tl']:,} TL, {r['pred_usd']:.0f} USD, oran {r['ratio']:.3f}"
+            f"  {r['brand']} {r['model']} {r['year']} {r['km']:,} km: "
+            f"{r['price_tl']:,} TL, {r['fitted_tl']:,.0f} TL, {r['error_pct']:+.1f}%"
         )
-    print("Segment katsayıları:", {k: round(v, 3) for k, v in loc["segments"].items()})
-    print(f"Genel katsayı: {loc['default']:.3f}")
+    print("Segment tabanları:", {k: round(v, 3) for k, v in loc["segments"].items()})
+    print(f"Genel taban: {loc['default']:.3f}")
+    print(f"km_factor_max: {loc['km_factor_max']:.3f}  model_cliff: {loc['model_cliff']:.3f}")
 
 
 if __name__ == "__main__":

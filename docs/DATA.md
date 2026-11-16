@@ -52,7 +52,7 @@
 | scrape_timestamp | — | metin | — | 0 | 784 | 2026-06-23T20:52:06 | Çıkarıldı (veri toplama zamanı) | Hayır |
 | search_price | — | float | — | 100 | 0 | – | Çıkarıldı (tamamen boş) | Hayır |
 | title | year, brand, model | metin | int, metin, metin | 0 | 769 | 2021 Ford Bronco Sport | `parse_title()` ile ayrıştırılır | Evet |
-| title_status | title_status | metin | Türkçe etiket | 1,0 | 6 | clean, salvage, missing | Türkçe etikete eşlenir | Evet |
+| title_status | title_status | metin | Türkçe etiket | 1,0 | 6 | clean, salvage, missing | Türkçe etikete eşlenir (salvage → "Ağır hasarlı", rebuilt → "Ağır hasarlı (onarılmış)") | Evet |
 | trans | — | metin | — | 95,7 | 21 | Auto, Automatic | Çıkarıldı (neredeyse boş) | Hayır |
 | transmission | transmission | metin | Türkçe etiket | 1,4 | 3 | automatic, other, manual | Türkçe etikete eşlenir | Evet |
 | trim | — | metin | — | 91,7 | 59 | 740i Sedan 4D... | Çıkarıldı (neredeyse boş) | Hayır |
@@ -75,6 +75,8 @@
 | 9 | Boş/çöp/sabit sütunlar çıkarıldı (engine, trans, trim, ext_color, int_color, est._monthly_pmt, search_price, feature_count, features_list, vin, scrape_timestamp) | Neredeyse boş, sabit, serbest metin veya kimlik niteliğinde | – |
 | 10 | `clean()` satır silmez; filtreler yalnızca eğitimde `filter_train_rows()` içinde | Test verisi aynı biçimde işlenebilmeli | – |
 | 11 | Model adlarından tire kaldırıldı, "Range Rover" gibi iki kelimelik adlar birleştirildi, markanın tekrarı atlandı | "F-150" ile "F150" aynı araç; model sayısı azalır, her modelde daha çok örnek olur | Tümü |
+| 12 | Model adındaki tek harf sonraki kelimeyle bitişik yazıldı ("C 250" → "C250", "G 35" → "G35"); rakamla başlayanlar ("3 Series") ve "Model 3" gibi adlar boşluklu kaldı | Veride "C 250" ile "C250" aynı araç; model sayısı azalır | Tek harfli model adları |
+| 13 | `title_status` etiketleri: salvage "Ağır hasarlı", rebuilt "Ağır hasarlı (onarılmış)" | Türkiye'de onarılmış araç da ağır hasar kayıtlı sayılır; "pert" yerine yaygın terim kullanılır | title_status dolu satırlar |
 
 ## 6. Eğitimden çıkarılan satırlar
 
