@@ -86,3 +86,25 @@ TITLE_STATUS_LABELS = {
     "missing": "Belgesiz",
     "parts only": "Parça için",
 }
+
+# ---------- Türkiye uyarlaması ----------
+# Model ABD verisiyle USD tahmin eder; marka segmenti katsayı seçmek için kullanılır.
+PREMIUM_BRANDS = {
+    "Acura", "Alfa Romeo", "Aston Martin", "Audi", "Bentley", "BMW", "Cadillac", "Ferrari",
+    "Genesis", "Infiniti", "Jaguar", "Lamborghini", "Land Rover", "Lexus", "Lincoln",
+    "Maserati", "McLaren", "Mercedes-Benz", "Porsche", "Rolls-Royce", "Volvo",
+}  # fmt: skip
+SUV_BODY_TYPES = {"SUV", "Pikap", "Kamyonet", "Arazi"}
+# Türkiye piyasa fiyatları (Kaan, sahibinden/arabam.com, 16 Kasım 2026). Hepsi benzinli otomatik,
+# temiz ruhsat; Tesla elektrikli.
+REFERENCE_CARS = [  # (brand, model, year, km, fuel_type, body_type, fiyat_TL)
+    ("Honda", "Civic", 2017, 200_000, "Benzin", "Sedan", 1_250_000),
+    ("Toyota", "Corolla", 2011, 235_000, "Benzin", "Sedan", 800_000),
+    ("Honda", "Accord", 2013, 175_000, "Benzin", "Sedan", 900_000),
+    ("Toyota", "RAV4", 2015, 165_000, "Benzin", "SUV", 1_250_000),
+    ("Jeep", "Wrangler", 2019, 70_000, "Benzin", "SUV", 4_200_000),
+    ("BMW", "X5", 2020, 150_000, "Benzin", "SUV", 3_750_000),
+    ("Porsche", "Cayenne", 2014, 190_000, "Benzin", "SUV", 4_150_000),
+    ("Tesla", "Model 3", 2021, 130_000, "Elektrik", "Sedan", 2_200_000),
+]
+USE_MODEL_OVERRIDES = True  # referansı olan marka+model kendi katsayısını kullanır

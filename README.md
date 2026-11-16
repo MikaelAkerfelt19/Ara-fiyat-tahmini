@@ -36,11 +36,15 @@ Kaggle CLI kullanmak istersen: `kaggle competitions download -c used-car-price-p
 
 ## Çalıştırma
 
+Önce veri dosyalarını `data/raw/` altına koy: `train_data_v2.csv` ve `test_data_v2.csv`.
+
 ```bash
 python -m src.db.load_data      # data/cars.db dosyasını oluşturur
-python -m src.ml.train          # models/model.joblib dosyasını üretir
-streamlit run app.py            # arayüzü açar
+python -m src.ml.train          # model.joblib, model_meta.json ve localization.json üretir
+streamlit run app.py            # arayüzü gerçek servisle açar (USE_MOCK ayarlama)
 ```
+
+Gösterilen fiyatlar TL cinsindendir: model USD tahmin eder, servis bunu güncel TCMB kuru ve Türkiye piyasa katsayısıyla TL'ye çevirir.
 
 Model henüz hazır değilken arayüz sahte (mock) servisle çalışır:
 

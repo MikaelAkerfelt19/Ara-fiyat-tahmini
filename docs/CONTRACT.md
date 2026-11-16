@@ -67,7 +67,7 @@ Arayüz bunları `from src.core.api import service` ile alır ve `service.predic
 | `get_options() -> dict[str, list[str]]` | Alan adı → seçenekler | Açılır listeler (marka, yakıt, vites…) | Değerler alfabetik sıralı ve tekrarsızdır. `model` alanı **yoktur**, o markaya bağlıdır |
 | `get_models_for_brand(brand: str) -> list[str]` | Model adları | Marka seçilince model listesi | Bilinmeyen marka için `[]` döner |
 | `get_ranges() -> dict[str, tuple[float, float]]` | Alan adı → (min, max) | Sayı kutularının sınırları | Verinin %1 ve %99 yüzdeliklerinden hesaplanır |
-| `predict(car: CarInput) -> Prediction` | Tahmin | "Fiyatı Tahmin Et" butonu | Geçersiz girdide `ValueError`, model yoksa `ModelNotReadyError` fırlatır |
+| `predict(car: CarInput) -> Prediction` | Tahmin | "Fiyatı Tahmin Et" butonu | TL fiyat = USD tahmin x güncel TCMB USD/TRY kuru x Türkiye piyasa katsayısı. Katsayı önceliği: marka+model özel katsayısı, sonra segment (elektrik, premium, suv, ekonomik), sonra genel katsayı. Geçersiz girdide `ValueError`, model yoksa `ModelNotReadyError` fırlatır |
 | `save_prediction(car: CarInput, pred: Prediction) -> None` | – | `predict`'ten hemen sonra | `predictions` tablosuna bir satır yazar |
 | `get_history(limit: int = 20) -> list[dict]` | Son tahminler | "Son tahminler" bölümü | En yeni en üstte. Her sözlükte `created_at`, girdi alanları ve `price` bulunur |
 | `get_model_info() -> dict` | Model bilgisi | "Model hakkında" bölümü | Anahtarlar: `model_name`, `version`, `trained_at`, `mae`, `rmse`, `r2`, `n_train`, `metrics_currency`. Model yoksa değerler `None` olur. Model metrikleri (`mae`, `rmse`) USD cinsindendir; `metrics_currency` bunu belirtir |
@@ -181,6 +181,7 @@ def get_model_info() -> dict:
 | Veritabanı | `data/cars.db` | Hayır |
 | Model | `models/model.joblib` | Hayır (Releases'e eklenir) |
 | Model bilgisi | `models/model_meta.json` | Hayır |
+| Türkiye katsayıları | `models/localization.json` | Hayır (`python -m src.ml.train` üretir) |
 
 ## 7. Veritabanı tabloları
 
@@ -220,3 +221,4 @@ CREATE TABLE IF NOT EXISTS model_runs (
 |---|---|---|
 | 9 Ekim 2026 | İlk taslak | Kaan |
 | 16 Kasım 2026 | CarInput alanları veriye göre kesinleşti; fiyat TL, kilometre km | Kaan |
+| 16 Kasım 2026 | Gerçek servis: TCMB kuru ve Türkiye piyasa katsayısı | Kaan |
