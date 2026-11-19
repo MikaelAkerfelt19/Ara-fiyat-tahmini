@@ -60,3 +60,19 @@ yer almaz; kullanıcı boş model listesiyle karşılaşmaz. Doğrulama:
 
 `get_options()` fonksiyonuna eklenen `year` ve `mileage` anahtarları CONTRACT.md'deki imzayı genişletir.
 Belge güncellemesi ve iki kişilik onay (Kaan) hâlâ bekleniyor; bu, §12 maddelerinden bağımsız bir süreç maddesidir.
+
+## V2 ek doğrulamaları (osman/frontend-v1 üzerine)
+
+| Kontrol | Sonuç |
+|---|---|
+| Arka plan açık gri-mavi (`#F4F7FB`) | ✅ tarayıcıda `rgb(244,247,251)` doğrulandı |
+| Marka seçilmeden Model görünmüyor | ✅ 1 selectbox ("Marka"), "Önce marka seçin" yazısı |
+| Model seçilmeden yıl/km/yakıt/vites/diğer alanlar gizli | ✅ 2 selectbox (Marka + Model), `number_input` yok |
+| Silindir: Elektrik ve Hibrit'te gizli, Dizel'de görünür | ✅ Playwright + 3 parametreli test |
+| Sonuçta dolar/TL dönüşüm satırı yok | ✅ backend fiyatı TL döndürüyor, arayüz sadece TL gösteriyor |
+| Testler | **137 passed** (103 backend + 34 frontend) |
+| ruff check / format --check | temiz |
+| Ekran görüntüleri | gerçek servisle yeniden üretildi (`docs/img/*.png`) |
+
+Veri ve fiyatlar Kaan'ın backend'i (`src.core.service` → `data/cars.db` + model) üzerinden
+geliyor; arayüz veritabanına/model dosyasına doğrudan erişmiyor.
