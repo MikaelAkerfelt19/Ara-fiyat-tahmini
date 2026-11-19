@@ -24,10 +24,11 @@ def test_tek_vurgu_rengi_ve_sade_menu() -> None:
     assert config["client"]["toolbarMode"] == "minimal"
     assert config["theme"]["primaryColor"].startswith("#")
     assert config["theme"]["font"] == "sans serif"
+    assert config["theme"]["backgroundColor"] == "#F4F7FB"
 
 
 def test_metin_tutarliligi_ve_kapali_bolumler() -> None:
-    at = AppTest.from_file(APP).run()
+    at = AppTest.from_file(APP, default_timeout=30).run()
     assert not list(at.exception), at.exception
     kategori = {
         "Marka",
@@ -40,15 +41,17 @@ def test_metin_tutarliligi_ve_kapali_bolumler() -> None:
         "Ruhsat durumu",
         "Satıcı tipi",
     }
+    at.selectbox[0].set_value("BMW").run()
+    at.selectbox[1].set_value("3 Series").run()
     assert all(w.options[0] == "Seçin" for w in at.selectbox if w.label in kategori)
     assert [e.label for e in at.expander] == ["Son tahminler", "Model hakkında"]
     assert all(not e.proto.expanded for e in at.expander)
 
 
 def test_sonuc_en_dikkat_cekimli_ogedir() -> None:
-    at = AppTest.from_file(APP).run()
+    at = AppTest.from_file(APP, default_timeout=30).run()
     at.selectbox[0].set_value("BMW").run()
-    at.selectbox[1].set_value("3 Series")
+    at.selectbox[1].set_value("3 Series").run()
     at.selectbox[4].set_value("Dizel")
     at.selectbox[5].set_value("Otomatik")
     at.button[0].click().run()

@@ -14,6 +14,7 @@ from src.core.schemas import CarInput
 logger = logging.getLogger(__name__)
 
 EMPTY_CHOICE = "Seçin"
+NO_CYLINDER_FUELS = {"Elektrik", "Hibrit"}
 
 
 def optional_choice(value: str) -> str | None:
@@ -38,7 +39,14 @@ ranges = get_ranges()
 year_options = options["year"]
 mileage_options = options["mileage"]
 
-# Marka / model — model listesi markaya bağlı; marka değişince eski seçim temizlenir
+# Varsayılanlar: alanlar gizliyken servise boş değer gönderilmez.
+year = 2020 if 2020 in year_options else year_options[0]
+mileage = 50_000 if 50_000 in mileage_options else mileage_options[0]
+fuel_type = transmission = EMPTY_CHOICE
+condition = drive = body_type = title_status = seller_type = EMPTY_CHOICE
+cylinders = None
+
+# Adım 1 — marka
 col1, col2 = st.columns(2)
 with col1:
     brand = st.selectbox(
@@ -49,74 +57,89 @@ if brand != st.session_state.get("_last_brand", brand):
     st.session_state["model"] = EMPTY_CHOICE
 st.session_state["_last_brand"] = brand
 
+# Adım 2 — model (marka seçilince görünür)
+model = EMPTY_CHOICE
 with col2:
-    brand_selected = brand != EMPTY_CHOICE
-    models = get_models_for_brand(brand) if brand_selected else []
-    model = st.selectbox(
-        "Model",
-        [EMPTY_CHOICE, *models],
-        key="model",
-        disabled=not brand_selected,
-        filter_mode="fuzzy",
-    )
-    if not brand_selected:
+    if brand != EMPTY_CHOICE:
+        models = get_models_for_brand(brand)
+        model = st.selectbox(
+            "Model",
+            [EMPTY_CHOICE, *models],
+            key="model",
+            filter_mode="fuzzy",
+        )
+    else:
         st.caption("Önce marka seçin")
 
-# Model yılı / kilometre — seçenekli (gerçek temizleme aralıklarından)
-col1, col2 = st.columns(2)
-with col1:
-    year = st.selectbox(
-        "Model yılı",
-        year_options,
-        index=year_options.index(2020) if 2020 in year_options else 0,
-        key="year",
-        filter_mode="fuzzy",
-    )
-with col2:
-    mileage = st.selectbox(
-        "Kilometre",
-        mileage_options,
-        index=mileage_options.index(50_000) if 50_000 in mileage_options else 0,
-        format_func=format_km,
-        key="mileage",
-        filter_mode="fuzzy",
-    )
+# Adım 3 — kalan alanlar (model seçilince görünür)
+if model != EMPTY_CHOICE:
+    if model != st.session_state.get("_last_model", model):
+        for key in (
+            "fuel_type",
+            "transmission",
+            "condition",
+            "drive",
+            "body_type",
+            "title_status",
+            "seller_type",
+        ):
+            st.session_state[key] = EMPTY_CHOICE
+    st.session_state["_last_model"] = model
 
-# Yakıt / vites
-col1, col2 = st.columns(2)
-with col1:
-    fuel_type = st.selectbox("Yakıt", [EMPTY_CHOICE, *options["fuel_type"]], key="fuel_type")
-with col2:
-    transmission = st.selectbox(
-        "Vites", [EMPTY_CHOICE, *options["transmission"]], key="transmission"
-    )
+    col1, col2 = st.columns(2)
+    with col1:
+        year = st.selectbox(
+            "Model yılı",
+            year_options,
+            index=year_options.index(year),
+            key="year",
+            filter_mode="fuzzy",
+        )
+    with col2:
+        mileage = st.selectbox(
+            "Kilometre",
+            mileage_options,
+            index=mileage_options.index(mileage),
+            format_func=format_km,
+            key="mileage",
+            filter_mode="fuzzy",
+        )
 
-# İsteğe bağlı alanlar
-col1, col2 = st.columns(2)
-with col1:
-    cylinders_min, cylinders_max = (int(v) for v in ranges["cylinders"])
-    cylinders = st.number_input(
-        "Silindir",
-        min_value=cylinders_min,
-        max_value=cylinders_max,
-        value=cylinders_min,
-        key="cylinders",
-    )
-with col2:
-    condition = st.selectbox("Durum", [EMPTY_CHOICE, *options["condition"]], key="condition")
+    col1, col2 = st.columns(2)
+    with col1:
+        fuel_type = st.selectbox("Yakıt", [EMPTY_CHOICE, *options["fuel_type"]], key="fuel_type")
+    with col2:
+        transmission = st.selectbox(
+            "Vites", [EMPTY_CHOICE, *options["transmission"]], key="transmission"
+        )
 
-col1, col2 = st.columns(2)
-with col1:
-    drive = st.selectbox("Çekiş", [EMPTY_CHOICE, *options["drive"]], key="drive")
-with col2:
-    body_type = st.selectbox("Kasa tipi", [EMPTY_CHOICE, *options["body_type"]], key="body_type")
+    # Silindir: yalnızca yakıt seçilmiş ve elektrik/hibrit değilse görünür.
+    if fuel_type not in (EMPTY_CHOICE, *NO_CYLINDER_FUELS):
+        cylinders_min, cylinders_max = (int(v) for v in ranges["cylinders"])
+        cylinders = st.number_input(
+            "Silindir",
+            min_value=cylinders_min,
+            max_value=cylinders_max,
+            value=cylinders_min,
+            key="cylinders",
+        )
 
-col1, col2 = st.columns(2)
-with col1:
-    title_status = st.selectbox(
-        "Ruhsat durumu", [EMPTY_CHOICE, *options["title_status"]], key="title_status"
-    )
-with col2:
+    col1, col2 = st.columns(2)
+    with col1:
+        condition = st.selectbox("Durum", [EMPTY_CHOICE, *options["condition"]], key="condition")
+    with col2:
+        drive = st.selectbox("Çekiş", [EMPTY_CHOICE, *options["drive"]], key="drive")
+
+    col1, col2 = st.columns(2)
+    with col1:
+        body_type = st.selectbox(
+            "Kasa tipi", [EMPTY_CHOICE, *options["body_type"]], key="body_type"
+        )
+    with col2:
+        title_status = st.selectbox(
+            "Ruhsat durumu", [EMPTY_CHOICE, *options["title_status"]], key="title_status"
+        )
+
     seller_type = st.selectbox(
         "Satıcı tipi", [EMPTY_CHOICE, *options["seller_type"]], key="seller_type"
     )

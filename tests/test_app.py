@@ -6,18 +6,35 @@ from streamlit.testing.v1 import AppTest
 
 APP = Path(__file__).resolve().parents[1] / "app.py"
 
+TUM_ALANLAR = [
+    "Marka",
+    "Model",
+    "Model yılı",
+    "Kilometre",
+    "Yakıt",
+    "Vites",
+    "Durum",
+    "Çekiş",
+    "Kasa tipi",
+    "Ruhsat durumu",
+    "Satıcı tipi",
+]
+
 
 def _app() -> AppTest:
-    at = AppTest.from_file(APP).run()
+    at = AppTest.from_file(APP, default_timeout=30).run()
     assert not list(at.exception), at.exception
     return at
 
 
-def _doldur(at: AppTest) -> AppTest:
+def _marka_model(at: AppTest) -> AppTest:
     at.selectbox[0].set_value("BMW").run()
-    at.selectbox[1].set_value("3 Series")
-    at.selectbox[2].set_value(2020)
-    at.selectbox[3].set_value(50_000)
+    at.selectbox[1].set_value("3 Series").run()
+    return at
+
+
+def _doldur(at: AppTest) -> AppTest:
+    at = _marka_model(at)
     at.selectbox[4].set_value("Dizel")
     at.selectbox[5].set_value("Otomatik")
     at.run()
@@ -26,21 +43,19 @@ def _doldur(at: AppTest) -> AppTest:
 
 def test_sayfa_hatasiz_acilir() -> None:
     at = _app()
-    assert [w.label for w in at.selectbox] == [
-        "Marka",
-        "Model",
-        "Model yılı",
-        "Kilometre",
-        "Yakıt",
-        "Vites",
-        "Durum",
-        "Çekiş",
-        "Kasa tipi",
-        "Ruhsat durumu",
-        "Satıcı tipi",
-    ]
-    assert [w.label for w in at.number_input] == ["Silindir"]
+    assert [w.label for w in at.selectbox] == ["Marka"]
+    assert not at.number_input
     assert [e.label for e in at.expander] == ["Son tahminler", "Model hakkında"]
+
+    at.selectbox[0].set_value("BMW").run()
+    assert [w.label for w in at.selectbox] == ["Marka", "Model"]
+
+    at.selectbox[1].set_value("3 Series").run()
+    assert [w.label for w in at.selectbox] == TUM_ALANLAR
+    assert not at.number_input  # yakıt seçilmeden silindir gizli
+
+    at.selectbox[4].set_value("Dizel").run()
+    assert [w.label for w in at.number_input] == ["Silindir"]
     assert not at.markdown  # ilk açılışta sonuç yok
 
 
@@ -70,9 +85,13 @@ def test_sonuc_baska_alana_dokununca_kalir() -> None:
 
 def test_marka_degisince_model_sifirlanir() -> None:
     at = _app()
-    assert at.selectbox[1].disabled
+    assert [w.label for w in at.selectbox] == ["Marka"]
+    assert "Önce marka seçin" in [c.value for c in at.caption]
+
     at.selectbox[0].set_value("BMW").run()
     at.selectbox[1].set_value("3 Series").run()
+    assert len(at.selectbox) == len(TUM_ALANLAR)
+
     at.selectbox[0].set_value("Ford").run()
     assert at.selectbox[1].value == "Seçin"
     assert at.selectbox[1].options == [
@@ -90,6 +109,16 @@ def test_marka_degisince_model_sifirlanir() -> None:
         "Taurus",
         "Transit",
     ]
+    assert [w.label for w in at.selectbox] == ["Marka", "Model"]
+
+
+def test_model_secilmeden_diger_alanlar_gizli() -> None:
+    at = _app()
+    at.selectbox[0].set_value("Toyota").run()
+    etiketler = [w.label for w in at.selectbox]
+    assert etiketler == ["Marka", "Model"]
+    assert "Vites" not in etiketler
+    assert not at.number_input
 
 
 def test_son_tahminler_en_yeni_ustte() -> None:

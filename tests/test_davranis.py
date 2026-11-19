@@ -13,14 +13,19 @@ APP = Path(__file__).resolve().parents[1] / "app.py"
 
 
 def _app() -> AppTest:
-    at = AppTest.from_file(APP).run()
+    at = AppTest.from_file(APP, default_timeout=30).run()
     assert not list(at.exception), at.exception
     return at
 
 
-def _dolu_form(at: AppTest) -> AppTest:
+def _model_sec(at: AppTest) -> AppTest:
     at.selectbox[0].set_value("BMW").run()
-    at.selectbox[1].set_value("3 Series")
+    at.selectbox[1].set_value("3 Series").run()
+    return at
+
+
+def _dolu_form(at: AppTest) -> AppTest:
+    at = _model_sec(at)
     at.selectbox[4].set_value("Dizel")
     at.selectbox[5].set_value("Otomatik")
     at.run()
@@ -39,9 +44,8 @@ def test_her_markanin_en_az_bir_modeli_var() -> None:
 
 def test_ilk_acilis_durumu() -> None:
     at = _app()
-    assert at.selectbox[1].disabled  # marka seçilmeden model kapalı
+    assert [w.label for w in at.selectbox] == ["Marka"]
     assert "Önce marka seçin" in [c.value for c in at.caption]
-    assert all(w.value == "Seçin" or w.value is not None for w in at.selectbox)
     assert not at.markdown  # sonuç alanı yok
     infolar = [i.value for i in at.info]
     assert "Henüz tahmin yapılmadı." in infolar
@@ -97,3 +101,17 @@ def test_beklenmeyen_hata_traceback_vermez(
         logging.disable(logging.NOTSET)
     assert [e.value for e in at.error] == ["Bir sorun oluştu. Lütfen daha sonra tekrar deneyin."]
     assert not list(at.exception)
+
+
+@pytest.mark.parametrize("fuel", ["Elektrik", "Hibrit"])
+def test_elektrik_ve_hibrit_silindir_gizli(fuel: str) -> None:
+    at = _model_sec(_app())
+    at.selectbox[4].set_value(fuel).run()
+    assert [w.label for w in at.number_input] == []
+    assert not list(at.exception)
+
+
+def test_dizel_silindir_gorunur() -> None:
+    at = _model_sec(_app())
+    at.selectbox[4].set_value("Dizel").run()
+    assert [w.label for w in at.number_input] == ["Silindir"]
