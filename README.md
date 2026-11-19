@@ -20,6 +20,10 @@ Model, Kaggle **Used Car Price Prediction Challenge** verisi ve aynı kaynaktan 
 | Demir Kaan Demir | Veri, veritabanı, model eğitimi, servis katmanı (backend) |
 | Osman Mengi | Streamlit arayüzü (frontend) |
 
+> **Arayüz notu:** fiyatı servis doğrudan TL olarak döndürür. Arayüz dolar/TL
+> dönüşümünü hesaplamaz veya göstermez; yalnızca TL fiyatı, olası aralığı ve
+> model başarı ölçülerini sunar (MAE/RMSE backend metrikleri USD cinsindendir).
+
 ## Teknolojiler
 
 Python 3.12 · Streamlit · pandas · scikit-learn · SQLite · joblib · pytest · ruff · GitHub Actions

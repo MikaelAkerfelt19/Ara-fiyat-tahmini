@@ -67,6 +67,7 @@ Arayüz bunları `from src.core.api import service` ile alır ve `service.predic
 |---|---|---|---|
 | `get_options() -> dict[str, list[str]]` | Alan adı → seçenekler | Açılır listeler (marka, yakıt, vites…) | Değerler alfabetik sıralı ve tekrarsızdır. `model` alanı **yoktur**, o markaya bağlıdır |
 | `get_models_for_brand(brand: str) -> list[str]` | Model adları | Marka seçilince model listesi | Bilinmeyen marka için `[]` döner |
+| `get_years_for_model(brand: str, model: str) -> list[int]` | Seçilen marka+model için gerçek yıllar | Model yılı seçimi | Veride o araç için bulunan yıllar, yeniden eskiye sıralı; bilinmeyen araç için `[]` |
 | `get_ranges() -> dict[str, tuple[float, float]]` | Alan adı → (min, max) | Sayı kutularının sınırları | Verinin %1 ve %99 yüzdeliklerinden hesaplanır |
 | `predict(car: CarInput) -> Prediction` | Tahmin | "Fiyatı Tahmin Et" butonu | TL fiyat = USD tahmin x güncel TCMB USD/TRY kuru x taban katsayı x km çarpanı x (ağır hasarlıysa 0,65). Taban önceliği: marka+model, sonra segment (elektrik, premium, suv, ekonomik), sonra genel. Km çarpanı 120.000-140.000 km arasında 1'den üst sınıra doğrusal yükselir; üst sınır modelin kendi fiyat kırılmasından türetilir, böylece km arttıkça TL fiyat yükselmez. Ayrıca km zarfı uygulanır: 0 km'den aracın km'sine 1.000 km adımlı ızgarada fiyat hesaplanıp en küçüğü alınır (daha düşük km'li hal daha ucuz olamaz); ağır hasarlıda model "Temiz" fiyatlar, sonra tam x0,65 uygulanır. Satıcı tipi (`seller_type`) `None` ise fiyat "Galeri" ve "Bireysel" için ayrı hesaplanır ve geometrik ortalaması alınır (piyasa ortalaması). Ağır hasarlı: tapu durumu "Ağır hasarlı" veya "Ağır hasarlı (onarılmış)". Geçersiz girdide `ValueError`, model yoksa `ModelNotReadyError` fırlatır |
 | `save_prediction(car: CarInput, pred: Prediction) -> None` | – | `predict`'ten hemen sonra | `predictions` tablosuna bir satır yazar |
@@ -131,6 +132,12 @@ def get_options() -> dict[str, list[str]]:
 
 def get_models_for_brand(brand: str) -> list[str]:
     return _MODELS.get(brand, [])
+
+
+def get_years_for_model(brand: str, model: str) -> list[int]:
+    if brand not in BRAND_MODELS or model not in BRAND_MODELS[brand]:
+        return []
+    return list(range(2026, 2017, -1))
 
 
 def get_ranges() -> dict[str, tuple[float, float]]:
@@ -231,3 +238,4 @@ CREATE TABLE IF NOT EXISTS model_runs (
 | 16 Kasım 2026 | Yumuşak km çarpanı (band yerine), ağır hasar %35 indirimi; title_status etiketleri "Ağır hasarlı" / "Ağır hasarlı (onarılmış)" | Kaan |
 | 16 Kasım 2026 | Monoton kısıtlı model (km −, yıl +), km zarfı ve ağır hasarın tam x0,65 uygulanması (`tl_price`) | Kaan |
 | 16 Kasım 2026 | İkinci veri seti (vehicles.csv): `CarInput.seller_type` (Galeri/Bireysel, isteğe bağlı), `get_options` içinde `seller_type`, `cars` tablosuna `seller_type` ve `source`; belirtilmeyen satıcı tipi iki tipin geometrik ortalaması | Kaan |
+| 19 Kasım 2026 | `get_years_for_model` eklendi (model yılı tutarlılığı) — frontend onayı bekliyor | meng-IO |

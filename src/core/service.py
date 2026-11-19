@@ -25,11 +25,25 @@ LOCALIZATION_PATH = Path("models/localization.json")
 
 def get_options() -> dict[str, list[str]]:
     # model markaya bağlı olduğu için seçenek listesinde yok
-    return queries.distinct_values([c for c in CAT_COLS if c != "model"])
+    options = queries.distinct_values([c for c in CAT_COLS if c != "model"])
+    # Marka listesi de model eşiğiyle filtrelenir: modeli olmayan marka gösterilmez.
+    options["brand"] = queries.brands_with_models()
+
+    # Yıl ve kilometre de seçenekli alanlar: değerler doğrudan cars tablosundan.
+    years = queries.distinct_values(["year"]).get("year", [])
+    options["year"] = sorted(int(y) for y in years if 1950 <= int(y) <= date.today().year + 1)
+    _, km_max = queries.numeric_ranges(["mileage"])["mileage"]
+    options["mileage"] = list(range(0, int(km_max) + 1, 5_000))
+    return options
 
 
 def get_models_for_brand(brand: str) -> list[str]:
     return queries.models_for_brand(brand)
+
+
+def get_years_for_model(brand: str, model: str) -> list[int]:
+    """Seçilen marka+model için veride bulunan yıllar (yeniden eskiye)."""
+    return queries.years_for_model(brand, model)
 
 
 def get_ranges() -> dict[str, tuple[float, float]]:
