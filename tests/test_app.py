@@ -72,7 +72,7 @@ def test_tam_formda_sonuc_gorunur() -> None:
     assert [m.value for m in at.markdown] == ["## 880.000 ₺"]
     captions = [c.value for c in at.caption]
     assert "Olası aralık: 792.000 ₺ – 968.000 ₺" in captions
-    assert "Kullanılan kur: 1 USD = 40,00 ₺" in captions
+    assert not any("Kullanılan kur" in c for c in captions)
     assert not list(at.exception)
 
 

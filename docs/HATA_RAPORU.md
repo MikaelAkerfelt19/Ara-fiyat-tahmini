@@ -55,7 +55,7 @@
 | Marka seçilmeden model kapalı + "Önce marka seçin" | ✅ |
 | Eksik alan → sarı uyarı | ✅ |
 | Marka değişince model sıfırlanır | ✅ |
-| Dolu form → **1.262.707 ₺** + aralık + kur | ✅ |
+| Dolu form → **1.262.707 ₺** + aralık (kur satırı yok) | ✅ |
 | Başka alana dokununca sonuç kalır | ✅ |
 | Geçmiş açılır, satırlar görünür | ✅ |
 | Model hakkında → MAE / R² görünür | ✅ |

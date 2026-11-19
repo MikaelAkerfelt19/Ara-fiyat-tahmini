@@ -8,7 +8,7 @@ Ayrıntılı doğrulama kanıtları: [`DOGRULAMA.md`](DOGRULAMA.md).
 - Fiyat birimi **TL**, gösterim **`₺`**.
 - Form 12 alan: 6 zorunlu + 6 isteğe bağlı.
 - Marka, model, yıl ve kilometre seçenekleri **doğrudan `cars` tablosundan** gelir.
-- Fiyatlar TCMB kuru × Türkiye piyasa katsayısı × km çarpanı ile hesaplanır.
+- Fiyatlar servisten TL olarak gelir; arayüz dolar/TL dönüşümünü göstermez.
 - Git yazarı bu repo için `meng-IO` (son 10 commit); GitHub remote **yok**.
 
 ## Adımlar ve commit'ler

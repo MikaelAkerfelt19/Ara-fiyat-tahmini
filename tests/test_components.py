@@ -46,12 +46,12 @@ def _calistir(kod: str) -> AppTest:
     return at
 
 
-def test_render_result_fiyat_aralik_ve_kur() -> None:
+def test_render_result_fiyat_ve_aralik() -> None:
     at = _calistir(_ONUZ)
     assert [m.value for m in at.markdown] == ["## 18.450 ₺"]
     captions = [c.value for c in at.caption]
     assert "Olası aralık: 16.605 ₺ – 20.300 ₺" in captions
-    assert "Kullanılan kur: 1 USD = 40,00 ₺" in captions
+    assert not any("Kullanılan kur" in c for c in captions)
 
 
 def test_render_history_bos() -> None:

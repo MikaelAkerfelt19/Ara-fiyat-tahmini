@@ -6,7 +6,7 @@ Aşağıdaki maddeler "tahmin" değil, çalıştırılmış komut ve tarayıcı 
 
 | # | Kontrol maddesi | Durum | Kanıt |
 |---|---|---|---|
-| 1 | Sahte servis kapalıyken gerçek veriyle açılıyor ve tahmin veriyor | ✅ | `env -u USE_MOCK streamlit run app.py` + Playwright: Toyota Corolla 2015 / 100.000 km → **1.262.707 ₺**, aralık 791.085 ₺ – 1.901.453 ₺, kur 1 USD = 50,44 ₺. `docs/img/sonuc.png` |
+| 1 | Sahte servis kapalıyken gerçek veriyle açılıyor ve tahmin veriyor | ✅ | `env -u USE_MOCK streamlit run app.py` + Playwright: Toyota Corolla 2015 / 100.000 km → **1.262.707 ₺**, aralık 791.085 ₺ – 1.901.453 ₺. `docs/img/sonuc.png` |
 | 2 | §5'teki her durum denendi, hiçbirinde traceback görünmüyor | ✅ | `tests/test_davranis.py` + `tests/test_app.py`: 11 senaryo, her birinde `at.exception == []` |
 | 3 | §6'daki tasarım ilkelerinin hepsi sağlanıyor | ✅ | `tests/test_tasarim.py` (4 test) + `.streamlit/config.toml` + `docs/img/telefon.png` |
 | 4 | Kodda sabit yazılmış seçenek veya sınır yok | ✅ | `app.py` tüm seçenekleri `service.get_options()`'tan okur; statik fallback `src/app/options.py` silindi. Sabit veri yalnızca sahte servistedir (CONTRACT.md §5 bunu açıkça tanımlar) |

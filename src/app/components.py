@@ -2,7 +2,7 @@
 
 import streamlit as st
 
-from src.app.formatters import format_price, format_rate, format_score
+from src.app.formatters import format_price, format_score
 from src.core.schemas import Prediction
 
 
@@ -14,8 +14,7 @@ def render_result(prediction: Prediction) -> None:
         low = format_price(prediction.low)
         high = format_price(prediction.high)
         st.caption(f"Olası aralık: {low} – {high}")
-    if prediction.usd_try is not None:
-        st.caption(f"Kullanılan kur: 1 USD = {format_rate(prediction.usd_try)} ₺")
+    # Fiyat servisten TL olarak gelir; dolar/TL dönüşümü arayüzde gösterilmez.
 
 
 _HISTORY_COLUMNS = {
