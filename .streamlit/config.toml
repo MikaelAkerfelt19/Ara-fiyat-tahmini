@@ -4,7 +4,7 @@ toolbarMode = "minimal"   # sağ üstteki geliştirici menüsü sade
 
 [theme]
 primaryColor = "#2563EB"  # tek vurgu rengi: yalnızca ana butonda kullanılacak
-backgroundColor = "#FFFFFF"
-secondaryBackgroundColor = "#F3F4F6"
+backgroundColor = "#F4F7FB"  # açık gri-mavi zemin
+secondaryBackgroundColor = "#FFFFFF"  # beyaz alanlar
 textColor = "#1F2937"
 font = "sans serif"

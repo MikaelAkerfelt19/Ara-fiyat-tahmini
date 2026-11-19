@@ -31,9 +31,7 @@ def get_options() -> dict[str, list[str]]:
 
     # Yıl ve kilometre de seçenekli alanlar: değerler doğrudan cars tablosundan.
     years = queries.distinct_values(["year"]).get("year", [])
-    options["year"] = sorted(
-        int(y) for y in years if 1950 <= int(y) <= date.today().year + 1
-    )
+    options["year"] = sorted(int(y) for y in years if 1950 <= int(y) <= date.today().year + 1)
     _, km_max = queries.numeric_ranges(["mileage"])["mileage"]
     options["mileage"] = list(range(0, int(km_max) + 1, 5_000))
     return options
@@ -59,9 +57,7 @@ def get_history(limit: int = 20) -> list[dict]:
 # ---------- Model ----------
 
 
-@lru_cache(
-    maxsize=1
-)  # dosyalar bir kez yüklenir; yeni model için Streamlit'i yeniden başlat
+@lru_cache(maxsize=1)  # dosyalar bir kez yüklenir; yeni model için Streamlit'i yeniden başlat
 def _load_model() -> tuple:
     paths = (MODEL_PATH, META_PATH, LOCALIZATION_PATH)
     if not all(p.exists() for p in paths):

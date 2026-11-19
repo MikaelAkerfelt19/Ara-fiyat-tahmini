@@ -102,9 +102,7 @@ def main() -> None:
             page.screenshot(path=str(OUT / "son_tahminler.png"), full_page=True)
             page.close()
 
-            phone = browser.new_page(
-                viewport={"width": 390, "height": 1200}, device_scale_factor=2
-            )
+            phone = browser.new_page(viewport={"width": 390, "height": 1200}, device_scale_factor=2)
             phone.goto(URL)
             phone.wait_for_selector('input[aria-label="Marka"]', timeout=30_000)
             _formu_doldur(phone)

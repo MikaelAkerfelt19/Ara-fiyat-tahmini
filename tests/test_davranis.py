@@ -95,7 +95,5 @@ def test_beklenmeyen_hata_traceback_vermez(
         at.button[0].click().run()
     finally:
         logging.disable(logging.NOTSET)
-    assert [e.value for e in at.error] == [
-        "Bir sorun oluştu. Lütfen daha sonra tekrar deneyin."
-    ]
+    assert [e.value for e in at.error] == ["Bir sorun oluştu. Lütfen daha sonra tekrar deneyin."]
     assert not list(at.exception)

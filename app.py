@@ -85,9 +85,7 @@ with col2:
 # Yakıt / vites
 col1, col2 = st.columns(2)
 with col1:
-    fuel_type = st.selectbox(
-        "Yakıt", [EMPTY_CHOICE, *options["fuel_type"]], key="fuel_type"
-    )
+    fuel_type = st.selectbox("Yakıt", [EMPTY_CHOICE, *options["fuel_type"]], key="fuel_type")
 with col2:
     transmission = st.selectbox(
         "Vites", [EMPTY_CHOICE, *options["transmission"]], key="transmission"
@@ -105,17 +103,13 @@ with col1:
         key="cylinders",
     )
 with col2:
-    condition = st.selectbox(
-        "Durum", [EMPTY_CHOICE, *options["condition"]], key="condition"
-    )
+    condition = st.selectbox("Durum", [EMPTY_CHOICE, *options["condition"]], key="condition")
 
 col1, col2 = st.columns(2)
 with col1:
     drive = st.selectbox("Çekiş", [EMPTY_CHOICE, *options["drive"]], key="drive")
 with col2:
-    body_type = st.selectbox(
-        "Kasa tipi", [EMPTY_CHOICE, *options["body_type"]], key="body_type"
-    )
+    body_type = st.selectbox("Kasa tipi", [EMPTY_CHOICE, *options["body_type"]], key="body_type")
 
 col1, col2 = st.columns(2)
 with col1:
