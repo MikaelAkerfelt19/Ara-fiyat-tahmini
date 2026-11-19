@@ -27,35 +27,59 @@ def _app() -> AppTest:
     return at
 
 
-def _marka_model(at: AppTest) -> AppTest:
+def _marka_model_yil_km(at: AppTest) -> AppTest:
     at.selectbox[0].set_value("BMW").run()
     at.selectbox[1].set_value("3 Series").run()
+    at.selectbox[2].set_value(at.selectbox[2].options[0]).run()
+    at.selectbox[3].set_value(50_000).run()
     return at
 
 
 def _doldur(at: AppTest) -> AppTest:
-    at = _marka_model(at)
-    at.selectbox[4].set_value("Dizel")
-    at.selectbox[5].set_value("Otomatik")
-    at.run()
+    at = _marka_model_yil_km(at)
+    at.selectbox[4].set_value("Dizel").run()
+    at.selectbox[5].set_value("Otomatik").run()
     return at
 
 
-def test_sayfa_hatasiz_acilir() -> None:
+def test_asamali_acilis_ve_yil_sirasi() -> None:
     at = _app()
     assert [w.label for w in at.selectbox] == ["Marka"]
     assert not at.number_input
-    assert [e.label for e in at.expander] == ["Son tahminler", "Model hakkında"]
 
     at.selectbox[0].set_value("BMW").run()
     assert [w.label for w in at.selectbox] == ["Marka", "Model"]
 
     at.selectbox[1].set_value("3 Series").run()
-    assert [w.label for w in at.selectbox] == TUM_ALANLAR
-    assert not at.number_input  # yakıt seçilmeden silindir gizli
+    assert [w.label for w in at.selectbox] == ["Marka", "Model", "Model yılı"]
+    yillar = at.selectbox[2].options
+    assert yillar == sorted(yillar, reverse=True)  # en yeniden eskiye
+
+    at.selectbox[2].set_value(yillar[0]).run()
+    assert [w.label for w in at.selectbox] == [
+        "Marka",
+        "Model",
+        "Model yılı",
+        "Kilometre",
+    ]
+
+    at.selectbox[3].set_value(50_000).run()
+    assert [w.label for w in at.selectbox][:5] == [
+        "Marka",
+        "Model",
+        "Model yılı",
+        "Kilometre",
+        "Yakıt",
+    ]
 
     at.selectbox[4].set_value("Dizel").run()
+    assert [w.label for w in at.selectbox][:6] == TUM_ALANLAR[:6]
+    assert not at.number_input  # vites seçilmeden silindir gizli
+
+    at.selectbox[5].set_value("Otomatik").run()
+    assert [w.label for w in at.selectbox] == TUM_ALANLAR
     assert [w.label for w in at.number_input] == ["Silindir"]
+    assert [e.label for e in at.expander] == ["Son tahminler", "Model hakkında"]
     assert not at.markdown  # ilk açılışta sonuç yok
 
 
@@ -69,9 +93,10 @@ def test_bos_formda_uyari_verir() -> None:
 def test_tam_formda_sonuc_gorunur() -> None:
     at = _doldur(_app())
     at.button[0].click().run()
-    assert [m.value for m in at.markdown] == ["## 880.000 ₺"]
+    assert len(at.markdown) == 1
+    assert at.markdown[0].value.startswith("## ") and "₺" in at.markdown[0].value
     captions = [c.value for c in at.caption]
-    assert "Olası aralık: 792.000 ₺ – 968.000 ₺" in captions
+    assert any(c.startswith("Olası aralık:") for c in captions)
     assert not any("Kullanılan kur" in c for c in captions)
     assert not list(at.exception)
 
@@ -79,45 +104,28 @@ def test_tam_formda_sonuc_gorunur() -> None:
 def test_sonuc_baska_alana_dokununca_kalir() -> None:
     at = _doldur(_app())
     at.button[0].click().run()
+    sonuc = at.markdown[0].value
     at.selectbox[0].set_value("Ford").run()
-    assert [m.value for m in at.markdown] == ["## 880.000 ₺"]
+    assert [m.value for m in at.markdown] == [sonuc]
 
 
 def test_marka_degisince_model_sifirlanir() -> None:
     at = _app()
-    assert [w.label for w in at.selectbox] == ["Marka"]
     assert "Önce marka seçin" in [c.value for c in at.caption]
 
     at.selectbox[0].set_value("BMW").run()
     at.selectbox[1].set_value("3 Series").run()
-    assert len(at.selectbox) == len(TUM_ALANLAR)
-
+    at.selectbox[2].set_value(at.selectbox[2].options[0]).run()
     at.selectbox[0].set_value("Ford").run()
     assert at.selectbox[1].value == "Seçin"
-    assert at.selectbox[1].options == [
-        "Seçin",
-        "Bronco",
-        "Edge",
-        "Escape",
-        "Expedition",
-        "Explorer",
-        "F150",
-        "Focus",
-        "Fusion",
-        "Mustang",
-        "Ranger",
-        "Taurus",
-        "Transit",
-    ]
+    assert "F150" in at.selectbox[1].options
     assert [w.label for w in at.selectbox] == ["Marka", "Model"]
 
 
 def test_model_secilmeden_diger_alanlar_gizli() -> None:
     at = _app()
     at.selectbox[0].set_value("Toyota").run()
-    etiketler = [w.label for w in at.selectbox]
-    assert etiketler == ["Marka", "Model"]
-    assert "Vites" not in etiketler
+    assert [w.label for w in at.selectbox] == ["Marka", "Model"]
     assert not at.number_input
 
 

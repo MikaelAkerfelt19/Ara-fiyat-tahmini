@@ -15,6 +15,11 @@ def get_options() -> dict[str, list[str]]:
 
 
 @st.cache_data(show_spinner=False)
+def get_years_for_model(brand: str, model: str) -> list[int]:
+    return service.get_years_for_model(brand, model)
+
+
+@st.cache_data(show_spinner=False)
 def get_ranges() -> dict[str, tuple[float, float]]:
     return service.get_ranges()
 

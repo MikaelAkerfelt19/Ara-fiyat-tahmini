@@ -7,6 +7,7 @@ import pytest
 from streamlit.testing.v1 import AppTest
 
 import src.core.mock_service as ms
+from src.core.api import service
 from src.core.errors import ModelNotReadyError
 
 APP = Path(__file__).resolve().parents[1] / "app.py"
@@ -21,21 +22,20 @@ def _app() -> AppTest:
 def _model_sec(at: AppTest) -> AppTest:
     at.selectbox[0].set_value("BMW").run()
     at.selectbox[1].set_value("3 Series").run()
+    at.selectbox[2].set_value(at.selectbox[2].options[0]).run()
+    at.selectbox[3].set_value(50_000).run()
     return at
 
 
 def _dolu_form(at: AppTest) -> AppTest:
     at = _model_sec(at)
-    at.selectbox[4].set_value("Dizel")
-    at.selectbox[5].set_value("Otomatik")
-    at.run()
+    at.selectbox[4].set_value("Dizel").run()
+    at.selectbox[5].set_value("Otomatik").run()
     return at
 
 
 def test_her_markanin_en_az_bir_modeli_var() -> None:
     """Marka listesi ile model listesi aynı eşiği kullanmalı (boş liste olmamalı)."""
-    from src.core.api import service
-
     markalar = service.get_options()["brand"]
     assert markalar
     for marka in markalar:
@@ -114,4 +114,23 @@ def test_elektrik_ve_hibrit_silindir_gizli(fuel: str) -> None:
 def test_dizel_silindir_gorunur() -> None:
     at = _model_sec(_app())
     at.selectbox[4].set_value("Dizel").run()
+    at.selectbox[5].set_value("Otomatik").run()
     assert [w.label for w in at.number_input] == ["Silindir"]
+
+
+def test_yillar_sadece_secili_aractan_geliyor() -> None:
+    at = _app()
+    at.selectbox[0].set_value("Toyota").run()
+    at.selectbox[1].set_value("Corolla").run()
+    yillar = at.selectbox[2].options
+    assert yillar == sorted(yillar, reverse=True)
+    assert [int(y) for y in yillar] == service.get_years_for_model("Toyota", "Corolla")
+
+    at.selectbox[1].set_value("Yaris").run()
+    assert [int(y) for y in at.selectbox[2].options] == service.get_years_for_model(
+        "Toyota", "Yaris"
+    )
+
+
+def test_bilinmeyen_arac_yil_verisi_yok() -> None:
+    assert service.get_years_for_model("Yok", "Yok") == []

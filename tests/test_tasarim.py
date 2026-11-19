@@ -27,8 +27,18 @@ def test_tek_vurgu_rengi_ve_sade_menu() -> None:
     assert config["theme"]["backgroundColor"] == "#F4F7FB"
 
 
+def _tam_form(at: AppTest) -> AppTest:
+    at.selectbox[0].set_value("BMW").run()
+    at.selectbox[1].set_value("3 Series").run()
+    at.selectbox[2].set_value(at.selectbox[2].options[0]).run()
+    at.selectbox[3].set_value(50_000).run()
+    at.selectbox[4].set_value("Dizel").run()
+    at.selectbox[5].set_value("Otomatik").run()
+    return at
+
+
 def test_metin_tutarliligi_ve_kapali_bolumler() -> None:
-    at = AppTest.from_file(APP, default_timeout=30).run()
+    at = _tam_form(AppTest.from_file(APP, default_timeout=30).run())
     assert not list(at.exception), at.exception
     kategori = {
         "Marka",
@@ -41,19 +51,13 @@ def test_metin_tutarliligi_ve_kapali_bolumler() -> None:
         "Ruhsat durumu",
         "Satıcı tipi",
     }
-    at.selectbox[0].set_value("BMW").run()
-    at.selectbox[1].set_value("3 Series").run()
     assert all(w.options[0] == "Seçin" for w in at.selectbox if w.label in kategori)
     assert [e.label for e in at.expander] == ["Son tahminler", "Model hakkında"]
     assert all(not e.proto.expanded for e in at.expander)
 
 
 def test_sonuc_en_dikkat_cekimli_ogedir() -> None:
-    at = AppTest.from_file(APP, default_timeout=30).run()
-    at.selectbox[0].set_value("BMW").run()
-    at.selectbox[1].set_value("3 Series").run()
-    at.selectbox[4].set_value("Dizel")
-    at.selectbox[5].set_value("Otomatik")
+    at = _tam_form(AppTest.from_file(APP, default_timeout=30).run())
     at.button[0].click().run()
     assert len(at.markdown) == 1
     assert at.markdown[0].value.startswith("## ")
