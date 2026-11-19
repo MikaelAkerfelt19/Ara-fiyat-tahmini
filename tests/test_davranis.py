@@ -46,7 +46,7 @@ def test_ilk_acilis_durumu() -> None:
     at = _app()
     assert [w.label for w in at.selectbox] == ["Marka"]
     assert "Önce marka seçin" in [c.value for c in at.caption]
-    assert not at.markdown  # sonuç alanı yok
+    assert not [m for m in at.markdown if m.value.startswith("## ")]
     infolar = [i.value for i in at.info]
     assert "Henüz tahmin yapılmadı." in infolar
     assert "Model bilgisi henüz yok." in infolar

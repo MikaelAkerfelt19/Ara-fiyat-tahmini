@@ -42,6 +42,11 @@ def _doldur(at: AppTest) -> AppTest:
     return at
 
 
+def _sonuc(at: AppTest) -> list:
+    """CSS enjeksiyonu hariç gerçek sonuç başlıklarını döndürür."""
+    return [m for m in at.markdown if m.value.startswith("## ")]
+
+
 def test_asamali_acilis_ve_yil_sirasi() -> None:
     at = _app()
     assert [w.label for w in at.selectbox] == ["Marka"]
@@ -80,21 +85,21 @@ def test_asamali_acilis_ve_yil_sirasi() -> None:
     assert [w.label for w in at.selectbox] == TUM_ALANLAR
     assert [w.label for w in at.number_input] == ["Silindir"]
     assert [e.label for e in at.expander] == ["Son tahminler", "Model hakkında"]
-    assert not at.markdown  # ilk açılışta sonuç yok
+    assert not _sonuc(at)  # ilk açılışta sonuç yok
 
 
 def test_bos_formda_uyari_verir() -> None:
     at = _app()
     at.button[0].click().run()
     assert [w.value for w in at.warning] == ["Lütfen tüm alanları doldurun."]
-    assert not at.markdown
+    assert not _sonuc(at)
 
 
 def test_tam_formda_sonuc_gorunur() -> None:
     at = _doldur(_app())
     at.button[0].click().run()
-    assert len(at.markdown) == 1
-    assert at.markdown[0].value.startswith("## ") and "₺" in at.markdown[0].value
+    assert len(_sonuc(at)) == 1
+    assert "₺" in _sonuc(at)[0].value
     captions = [c.value for c in at.caption]
     assert any(c.startswith("Olası aralık:") for c in captions)
     assert not any("Kullanılan kur" in c for c in captions)
@@ -104,9 +109,9 @@ def test_tam_formda_sonuc_gorunur() -> None:
 def test_sonuc_baska_alana_dokununca_kalir() -> None:
     at = _doldur(_app())
     at.button[0].click().run()
-    sonuc = at.markdown[0].value
+    sonuc = _sonuc(at)[0].value
     at.selectbox[0].set_value("Ford").run()
-    assert [m.value for m in at.markdown] == [sonuc]
+    assert [m.value for m in _sonuc(at)] == [sonuc]
 
 
 def test_marka_degisince_model_sifirlanir() -> None:
@@ -138,3 +143,33 @@ def test_son_tahminler_en_yeni_ustte() -> None:
     assert len(rows) == 2
     assert rows.iloc[0]["Kilometre"] == "10000"
     assert rows.iloc[0]["Fiyat"] != rows.iloc[1]["Fiyat"]
+
+
+def test_yil_secilmeden_uyari_verir() -> None:
+    at = _app()
+    at.selectbox[0].set_value("BMW").run()
+    at.selectbox[1].set_value("3 Series").run()
+    at.button[0].click().run()
+    assert [w.value for w in at.warning] == ["Lütfen tüm alanları doldurun."]
+    assert not list(at.exception)
+
+
+def test_kilometre_secilmeden_uyari_verir() -> None:
+    at = _app()
+    at.selectbox[0].set_value("BMW").run()
+    at.selectbox[1].set_value("3 Series").run()
+    at.selectbox[2].set_value(at.selectbox[2].options[0]).run()
+    at.button[0].click().run()
+    assert [w.value for w in at.warning] == ["Lütfen tüm alanları doldurun."]
+    assert not list(at.exception)
+
+
+def test_yakitsiz_ve_vitessiz_uyari_verir() -> None:
+    at = _app()
+    at.selectbox[0].set_value("BMW").run()
+    at.selectbox[1].set_value("3 Series").run()
+    at.selectbox[2].set_value(at.selectbox[2].options[0]).run()
+    at.selectbox[3].set_value(50_000).run()
+    at.button[0].click().run()
+    assert [w.value for w in at.warning] == ["Lütfen tüm alanları doldurun."]
+    assert not list(at.exception)

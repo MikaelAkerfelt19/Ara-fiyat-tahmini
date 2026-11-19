@@ -9,12 +9,15 @@ ROOT = Path(__file__).resolve().parents[1]
 APP = ROOT / "app.py"
 
 
-def test_tek_sayfa_html_css_yok() -> None:
+def test_html_css_istisnasi_sadece_arka_plan() -> None:
+    """Hareketli zemin kullanıcı onayıyla eklendi; başka HTML/CSS yok."""
     kod = APP.read_text(encoding="utf-8")
     assert "st.sidebar" not in kod  # kenar çubuğu yok
     assert "st.form(" not in kod  # form §8'de uygun değil
-    for yasak in ("unsafe_allow_html", "components.v1", "<div", "<style"):
-        assert yasak not in kod
+    assert "components.v1" not in kod
+    assert kod.count("unsafe_allow_html=True") == 1
+    assert "@keyframes zeminHareketi" in kod
+    assert "<script" not in kod and "javascript:" not in kod
 
 
 def test_tek_vurgu_rengi_ve_sade_menu() -> None:
@@ -59,5 +62,6 @@ def test_metin_tutarliligi_ve_kapali_bolumler() -> None:
 def test_sonuc_en_dikkat_cekimli_ogedir() -> None:
     at = _tam_form(AppTest.from_file(APP, default_timeout=30).run())
     at.button[0].click().run()
-    assert len(at.markdown) == 1
-    assert at.markdown[0].value.startswith("## ")
+    sonuc = [m for m in at.markdown if m.value.startswith("## ")]
+    assert len(sonuc) == 1
+    assert sonuc[0].value.startswith("## ")

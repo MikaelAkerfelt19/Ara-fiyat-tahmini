@@ -32,6 +32,25 @@ st.set_page_config(page_title="İkinci El Araç Fiyat Tahmini", layout="centered
 st.title("İkinci El Araç Fiyat Tahmini")
 st.caption("Aracın bilgilerini gir, tahmini piyasa fiyatını gör.")
 
+# Kullanıcı onayıyla yapılan tek HTML/CSS istisnası: hareketli arka plan.
+st.markdown(
+    """
+    <style>
+    @keyframes zeminHareketi {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+    [data-testid="stAppViewContainer"] {
+      background: linear-gradient(120deg, #F4F7FB, #E6EFFB, #F4F7FB);
+      background-size: 200% 200%;
+      animation: zeminHareketi 16s ease infinite;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
 if service is None:
     st.error(
         "Gerçek servis henüz bağlanmadı. Şimdilik USE_MOCK=1 ile çalıştırın "

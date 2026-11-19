@@ -76,3 +76,15 @@ Belge güncellemesi ve iki kişilik onay (Kaan) hâlâ bekleniyor; bu, §12 madd
 
 Veri ve fiyatlar Kaan'ın backend'i (`src.core.service` → `data/cars.db` + model) üzerinden
 geliyor; arayüz veritabanına/model dosyasına doğrudan erişmiyor.
+
+### C adımı — hareketli arka plan (kullanıcı onayıyla istisna)
+
+ARAYUZ_KONSEPT.md §6 ve AGENTS.md sayfaya HTML/CSS gömmeyi yasaklar. Kullanıcı
+(meng-IO) bu kuralı **açıkça kaldırdığı** için `app.py` içinde tek bir
+`st.markdown(unsafe_allow_html=True)` çağrısıyla `@keyframes zeminHareketi`
+animasyonu eklendi. Başka HTML/JS yok; test bu istisnanın yalnızca arka plan
+olduğunu doğrular (`test_html_css_istisnasi_sadece_arka_plan`).
+
+Hata testleri: eksik marka/model/yıl/km/yakıt/vites, model hazır değil,
+geçersiz girdi, beklenmeyen hata (traceback yok), Elektrik/Hibrit silindir
+kuralı ve model bazlı yıl tutarlılığı — toplam **144 test geçti**.
