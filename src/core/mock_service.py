@@ -2,19 +2,15 @@
 
 from datetime import datetime
 
+from src.core.mock_data import BRAND_MODELS, BRANDS, MILEAGE_OPTIONS, YEAR_OPTIONS
 from src.core.schemas import CarInput, Prediction
 
-_MODELS = {
-    "BMW": ["320i", "520d", "X5"],
-    "Ford": ["Fiesta", "Focus", "Kuga"],
-    "Toyota": ["Corolla", "C-HR", "Yaris"],
-}
 _HISTORY: list[dict] = []
 
 
 def get_options() -> dict[str, list[str]]:
     return {
-        "brand": sorted(_MODELS),
+        "brand": BRANDS,
         "fuel_type": ["Benzin", "Dizel", "Elektrik", "Hibrit"],
         "transmission": ["Manuel", "Otomatik"],
         "condition": ["Hasarlı", "Orta", "Sıfır", "Sıfır gibi", "Çok iyi", "İyi"],
@@ -22,11 +18,13 @@ def get_options() -> dict[str, list[str]]:
         "body_type": ["Hatchback", "SUV", "Sedan", "Station wagon"],
         "title_status": ["Ağır hasarlı", "Ağır hasarlı (onarılmış)", "Temiz"],
         "seller_type": ["Bireysel", "Galeri"],
+        "year": YEAR_OPTIONS,
+        "mileage": MILEAGE_OPTIONS,
     }
 
 
 def get_models_for_brand(brand: str) -> list[str]:
-    return _MODELS.get(brand, [])
+    return BRAND_MODELS.get(brand, [])
 
 
 def get_ranges() -> dict[str, tuple[float, float]]:
