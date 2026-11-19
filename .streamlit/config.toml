@@ -1,0 +1,10 @@
+# Görünüm yalnızca bu dosyadan yönetilir (ARAYUZ_KONSEPT.md §6). Sayfaya HTML/CSS gömülmez.
+[client]
+toolbarMode = "minimal"   # sağ üstteki geliştirici menüsü sade
+
+[theme]
+primaryColor = "#2563EB"  # tek vurgu rengi: yalnızca ana butonda kullanılacak
+backgroundColor = "#FFFFFF"
+secondaryBackgroundColor = "#F3F4F6"
+textColor = "#1F2937"
+font = "sans serif"

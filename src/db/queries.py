@@ -27,6 +27,21 @@ def distinct_values(columns: list[str]) -> dict[str, list[str]]:
     return out
 
 
+def brands_with_models() -> list[str]:
+    """En az MIN_MODEL_LISTINGS ilanı olan modeli bulunan markalar.
+
+    Marka listesi ile model listesi aynı eşiği kullanır; aksi halde arayüzde
+    seçilebilir ama modeli olmayan markalar (örn. Seat, Renault) görünür.
+    """
+    with closing(connect()) as conn:
+        rows = conn.execute(
+            "SELECT DISTINCT brand FROM cars WHERE brand IS NOT NULL "
+            "AND model IS NOT NULL GROUP BY brand, model HAVING COUNT(*) >= ?",
+            (MIN_MODEL_LISTINGS,),
+        ).fetchall()
+    return sorted(r[0] for r in rows)
+
+
 def models_for_brand(brand: str) -> list[str]:
     # Binlerce nadir model adı açılır listeyi kullanılmaz yapar. Model zaten ilan sayısı az
     # (min_frequency) modelleri "diğer" grubunda sayar, yani listeden çıkarmak tahmini bozmaz.
