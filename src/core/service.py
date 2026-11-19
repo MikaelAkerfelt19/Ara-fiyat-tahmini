@@ -41,6 +41,11 @@ def get_models_for_brand(brand: str) -> list[str]:
     return queries.models_for_brand(brand)
 
 
+def get_years_for_model(brand: str, model: str) -> list[int]:
+    """Seçilen marka+model için veride bulunan yıllar (yeniden eskiye)."""
+    return queries.years_for_model(brand, model)
+
+
 def get_ranges() -> dict[str, tuple[float, float]]:
     return queries.numeric_ranges(NUM_COLS)
 

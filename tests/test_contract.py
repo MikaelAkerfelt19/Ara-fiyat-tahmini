@@ -19,6 +19,7 @@ def car():
     [
         "get_options",
         "get_models_for_brand",
+        "get_years_for_model",
         "get_ranges",
         "predict",
         "save_prediction",
@@ -42,6 +43,12 @@ def test_options_are_sorted_unique_and_model_is_dependent():
 
 def test_unknown_brand_has_no_models():
     assert mock_service.get_models_for_brand("Yok") == []
+
+
+def test_model_years_are_descending_and_known_only():
+    yillar = mock_service.get_years_for_model("Toyota", "Corolla")
+    assert yillar and yillar == sorted(set(yillar), reverse=True)
+    assert mock_service.get_years_for_model("Yok", "Yok") == []
 
 
 def test_ranges_have_increasing_bounds():

@@ -101,7 +101,7 @@ def test_marka_degisince_model_sifirlanir() -> None:
         "Escape",
         "Expedition",
         "Explorer",
-        "F-150",
+        "F150",
         "Focus",
         "Fusion",
         "Mustang",

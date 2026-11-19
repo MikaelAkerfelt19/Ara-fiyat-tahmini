@@ -27,6 +27,14 @@ def get_models_for_brand(brand: str) -> list[str]:
     return BRAND_MODELS.get(brand, [])
 
 
+def get_years_for_model(brand: str, model: str) -> list[int]:
+    """Sahte servis: marka+model için makul bir yıl aralığı (yeniden eskiye)."""
+    if brand not in BRAND_MODELS or model not in BRAND_MODELS[brand]:
+        return []
+    en_eski = 2005 + (len(model) % 8)
+    return list(range(2026, en_eski - 1, -1))
+
+
 def get_ranges() -> dict[str, tuple[float, float]]:
     return {"year": (1990, 2026), "mileage": (0, 400_000), "cylinders": (3, 12)}
 
