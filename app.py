@@ -42,9 +42,11 @@ st.markdown(
       100% { background-position: 0% 50%; }
     }
     [data-testid="stAppViewContainer"] {
-      background: linear-gradient(120deg, #F4F7FB, #E6EFFB, #F4F7FB);
-      background-size: 200% 200%;
-      animation: zeminHareketi 16s ease infinite;
+      background: linear-gradient(
+        120deg, #DCEBFF 0%, #B9D6FF 25%, #F4F7FB 50%, #C9DFFF 75%, #DCEBFF 100%
+      );
+      background-size: 300% 300%;
+      animation: zeminHareketi 7s linear infinite;
     }
     </style>
     """,
