@@ -32,8 +32,7 @@ def get_options() -> dict[str, list[str]]:
     # Yıl ve kilometre de seçenekli alanlar: değerler doğrudan cars tablosundan.
     years = queries.distinct_values(["year"]).get("year", [])
     options["year"] = sorted(
-        (int(y) for y in years if 1950 <= int(y) <= date.today().year + 1),
-        reverse=True,
+        int(y) for y in years if 1950 <= int(y) <= date.today().year + 1
     )
     _, km_max = queries.numeric_ranges(["mileage"])["mileage"]
     options["mileage"] = list(range(0, int(km_max) + 1, 5_000))

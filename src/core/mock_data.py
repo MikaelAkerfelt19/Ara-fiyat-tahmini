@@ -12,7 +12,7 @@ from src.ml.config import CANONICAL_BRANDS
 # yıl < 1950 veya yok elenir, üst sınır 2027; km 600.000 üstü elenir.
 MIN_YEAR, MAX_YEAR = 1950, 2027
 MAX_KM, KM_STEP = 600_000, 5_000
-YEAR_OPTIONS = list(range(MAX_YEAR, MIN_YEAR - 1, -1))
+YEAR_OPTIONS = list(range(MIN_YEAR, MAX_YEAR + 1))
 MILEAGE_OPTIONS = list(range(0, MAX_KM + 1, KM_STEP))
 
 
